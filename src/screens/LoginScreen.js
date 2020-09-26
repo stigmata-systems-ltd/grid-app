@@ -14,8 +14,8 @@ export default class LoginScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      Username: 'amal90',
-      Password: 'amal90',
+      Username: 'adminrole',
+      Password: '@scn@pW0Ld',
       RememberMe: false,
       IsLoaded: false,
     };

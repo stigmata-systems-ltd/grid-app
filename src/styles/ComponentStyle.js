@@ -7,6 +7,11 @@ const ComponentStyles = StyleSheet.create({
     left: 8,
     color: '#184589',
   },
+  GridView_LabelComponentStyle: {
+    fontFamily: 'Archivo-Regular',
+    fontSize: 15,
+    color: '#000000',
+  },
   Login_TextBoxComponentStyle: {
     fontFamily: 'Archivo-Regular',
     fontSize: 18,
@@ -24,6 +29,17 @@ const ComponentStyles = StyleSheet.create({
     height: 50,
     padding: 10,
     marginBottom: 15,
+  },
+  GridView_TextBoxComponentStyle: {
+    fontFamily: 'Archivo-Regular',
+    fontSize: 14,
+    color:'black',
+    backgroundColor: '#FFFFFF',
+    marginVertical: 5,
+    height: 35,
+    padding: 5,
+    marginBottom: 15,
+    
   },
   TouchableOpacityOuterStyle: {
     backgroundColor: '#184589',
@@ -97,6 +113,10 @@ const ComponentStyles = StyleSheet.create({
   },
   HeaderUserStyle:{
     marginRight: -30
+  },
+  HeaderLeftArrowStyle:{
+    marginLeft: 20,
+    marginTop:10
   }
 });
 

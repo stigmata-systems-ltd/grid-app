@@ -1,5 +1,11 @@
 import React, {Component} from 'react';
-import {View, TouchableOpacity, PermissionsAndroid, StyleSheet, Text} from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  PermissionsAndroid,
+  StyleSheet,
+  Text,
+} from 'react-native';
 import StatusBarComponent from '../components/StatusBarComponent';
 import HeaderComponent from '../components/HeaderComponent';
 import TextBoxComponent from '../components/TextBoxComponent';
@@ -24,18 +30,22 @@ export default class DashBoardScreen extends Component {
       },
       currLoc: null,
       gridData: [],
-      watchId:''
+      watchId: '',
+      dataForCenter:{}
     };
   }
 
   componentDidMount = async () => {
+    this.getGridData();
+  };
+
+  getCurrentPositionData = async () => {
     let access = await this.accessPermission();
     let initialPosition = null;
     if (access) {
       await Geolocation.getCurrentPosition(
         (position) => {
           initialPosition = JSON.stringify(position);
-          console.log(initialPosition);
         },
         (error) => alert(error.message),
         {
@@ -46,42 +56,46 @@ export default class DashBoardScreen extends Component {
         },
       );
     }
-    this.getGridData();
   };
 
   getGridData = async () => {
-    let gridData = await GridAPI.GetGridList();
+    let {gridData, dataForCenter} = await GridAPI.GetGridList();
+    console.log("Date for center" + JSON.stringify(dataForCenter));
     if (gridData !== null) {
-      this.setState({gridData: gridData});
-      console.log(gridData);
-      let watchId = Geolocation.watchPosition(
-        (position) => {
-          console.log('Watch Position : ' + JSON.stringify(position));
-          this.setState({currLoc: position});
-          this.state.gridData.map((polygon) => {
-            let polygonDetail = [];
-            polygon.rectCords.map((pot) => {
-              let polypot = {
-                lat: pot.latitude,
-                lng: pot.longitude,
-              };
-              polygonDetail.push(polypot);
-            });
-            this.geoLocationHandler(
-              position,
-              polygonDetail,
-              polygon.title,
-              polygon.description,
-            );
-          });
-        },
-        (err) => {
-          err;
-        },
-        {enableHighAccuracy: true, distanceFilter: 1},
-      );
-      this.setState({watchId: watchId});
+      let initialRegion = this.getDeltas(dataForCenter.lat, dataForCenter.lng);
+      this.setState({initialRegion: initialRegion});
+      this.setState({gridData: gridData, dataForCenter: dataForCenter});
+      gridData.map((polygon) => {
+        let polygonDetail = [];
+        polygon.rectCords.map((pot) => {
+          let polypot = {
+            lat: pot.latitude,
+            lng: pot.longitude,
+          };
+          polygonDetail.push(polypot);
+        });
+        let position = {};
+        let coords = {
+          latitude: gridData[0].lat,
+          longitude: gridData[0].lng,
+        };
+        position.coords = coords;
+        this.geoLocationHandler(position, polygonDetail, polygon.title);
+      });
     }
+  };
+
+  setCurrentLocation = () => {
+    let watchId = Geolocation.watchPosition(
+      (position) => {
+        this.setState({currLoc: position});
+      },
+      (err) => {
+        err;
+      },
+      {enableHighAccuracy: true, distanceFilter: 1},
+    );
+    this.setState({watchId: watchId});
   };
 
   accessPermission = async () => {
@@ -110,7 +124,7 @@ export default class DashBoardScreen extends Component {
     }
   };
 
-  geoLocationHandler = (point, polygon, title, description) => {
+  geoLocationHandler = (point, polygon, title) => {
     var pointDetail = {
       lat: point.coords.latitude,
       lng: point.coords.longitude,
@@ -118,16 +132,8 @@ export default class DashBoardScreen extends Component {
 
     GeoFencing.containsLocation(pointDetail, polygon)
       .then(() => {
-        // ToastAndroid.show(
-        //   'within area ' + JSON.stringify(polygon),
-        //   ToastAndroid.LONG,
-        // );
         this.setState({
-          currentGridDetails:
-            'within area. Grid Name :' +
-            title +
-            ' Description : ' +
-            description,
+          currentGridDetails: 'within area. Grid Name :' + title,
         });
         return;
       })
@@ -135,13 +141,11 @@ export default class DashBoardScreen extends Component {
   };
 
   polygonHandler = (markerDetails) => {
-    //Alert.alert(markerDetails);
     console.log(markerDetails);
-    // this.setState({ currentGridDetails: markerDetails.description });
   };
 
   getDeltas = (lat, lng, distance = 5) => {
-    const oneDegreeOfLatitudeInMeters = 111.32 * 1000;
+    const oneDegreeOfLatitudeInMeters = 111.32 * 50;
 
     const latitudeDelta = distance / oneDegreeOfLatitudeInMeters;
     const longitudeDelta =
@@ -158,7 +162,7 @@ export default class DashBoardScreen extends Component {
 
   ClearWatch = () => {
     Geolocation.clearWatch(this.state.watchId);
-  }
+  };
 
   render() {
     return (
@@ -174,7 +178,7 @@ export default class DashBoardScreen extends Component {
               padding: 15,
             }}>
             <View style={{flex: 4}}>
-              <TextBoxComponent
+            <TextBoxComponent
                 WhereFromValue="Dashboard"
                 onChangeTextHandler={(text) => {
                   this.setState({GridNumber: text});
@@ -183,7 +187,9 @@ export default class DashBoardScreen extends Component {
                 autoCapitalize="none"
                 secureTextEntry={false}></TextBoxComponent>
             </View>
-            <TouchableOpacity style={{flex: 0.7}} onPress={this.ClearWatch()}>
+            <TouchableOpacity
+              style={{flex: 0.7}}
+              onPress={() => this.props.navigation.navigate("GridView")}>
               <Icon
                 name="search"
                 color="#FFFFFF"
@@ -209,7 +215,6 @@ export default class DashBoardScreen extends Component {
           style={{
             flex: 28,
             backgroundColor: 'red',
-            padding: 15,
             margin: 15,
           }}>
           <>
@@ -238,33 +243,36 @@ export default class DashBoardScreen extends Component {
                   )}
                   {this.state.gridData.length > 0 &&
                     this.state.gridData.map((marker) => {
-                      console.log("Marker : " + JSON.stringify(marker.rectCords));
                       return (
                         <>
                           <Polygon
                             key={'grid' + marker.lng}
                             coordinates={marker.rectCords}
-                            fillColor="#edfeff"
+                            strokeColor="red"
+                            strokeWidth={3}
+                            fillColor="green"
                             onPress={() => {
                               this.polygonHandler(marker);
                             }}
                             tappable={true}
                           />
+                          <Marker
+                            key={'marker' + marker.lat}
+                            coordinate={{
+                              latitude: marker.lat,
+                              longitude: marker.lng,
+                            }}
+                            title={marker.gridNumber}>
+                            <MaterialIcon
+                              name="location-pin"
+                              size={50}
+                              color="blue"
+                            />
+                          </Marker>
                         </>
                       );
                     })}
                 </MapView>
-                {this.state.currLoc !== null && (
-                  <View>
-                    <Text>
-                      Location: {this.state.currLoc.coords.latitude},{' '}
-                      {this.state.currLoc.coords.longitude}
-                    </Text>
-                    <Text style={{height: 50}}>
-                      Location: {this.state.currentGridDetails}
-                    </Text>
-                  </View>
-                )}
               </>
             ) : (
               <Text>No Render</Text>
