@@ -9,8 +9,23 @@ const ComponentStyles = StyleSheet.create({
   },
   GridView_LabelComponentStyle: {
     fontFamily: 'Archivo-Regular',
-    fontSize: 15,
+    fontSize: 14,
     color: '#000000',
+  },
+  Layer_LabelComponentStyle: {
+    fontFamily: 'Archivo-Regular',
+    fontSize: 14,
+    color: '#000000',
+  },
+  CleaningAndGrubbing_LabelComponentStyle: {
+    fontFamily: 'Archivo-Regular',
+    fontSize: 20,
+    color: '#000000',
+  },
+  GridArea_LabelComponentStyle: {
+    padding: 15,
+    fontSize: 18,
+    fontFamily: 'Archivo',
   },
   Login_TextBoxComponentStyle: {
     fontFamily: 'Archivo-Regular',
@@ -21,7 +36,7 @@ const ComponentStyles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
   },
-  Dashboard_TextBoxComponentStyle:{
+  Dashboard_TextBoxComponentStyle: {
     fontFamily: 'Archivo-Regular',
     fontSize: 18,
     backgroundColor: '#F1F4F8',
@@ -33,13 +48,32 @@ const ComponentStyles = StyleSheet.create({
   GridView_TextBoxComponentStyle: {
     fontFamily: 'Archivo-Regular',
     fontSize: 14,
-    color:'black',
+    color: 'black',
     backgroundColor: '#FFFFFF',
     marginVertical: 5,
     height: 35,
     padding: 5,
     marginBottom: 15,
-    
+  },
+  Layer_TextBoxComponentStyle: {
+    fontFamily: 'Archivo-Regular',
+    fontSize: 14,
+    color: 'black',
+    backgroundColor: '#F1F4F8',
+    marginVertical: 5,
+    height: 35,
+    padding: 5,
+    marginBottom: 15,
+  },
+  LayerLong_TextBoxComponentStyle: {
+    fontFamily: 'Archivo-Regular',
+    fontSize: 10,
+    color: 'black',
+    backgroundColor: '#F1F4F8',
+    marginVertical: 5,
+    height: 35,
+    padding: 5,
+    marginBottom: 15,
   },
   TouchableOpacityOuterStyle: {
     backgroundColor: '#184589',
@@ -111,13 +145,49 @@ const ComponentStyles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 10,
   },
-  HeaderUserStyle:{
-    marginRight: -30
+  HeaderUserStyle: {
+    marginRight: -30,
   },
-  HeaderLeftArrowStyle:{
+  HeaderLeftArrowStyle: {
     marginLeft: 20,
-    marginTop:10
-  }
+    marginTop: 10,
+  },
+  GridView_AutoCompleteComponentStyle: {
+    backgroundColor: '#F1F4F8',
+    borderColor: '#F1F4F8',
+  },
+  GridView_AutoCompleteComponentItemStyle: {
+    justifyContent: 'flex-start',
+  },
+  GridView_AutoCompleteComponentDropDownStyle: {
+    backgroundColor: '#F1F4F8',
+    position: 'absolute',
+  },
+  LayerCount_CompletedStyle: {
+    padding: 3,
+  },
+  View_OuterContainerStyle: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginLeft: 15,
+    marginRight: 15,
+    marginTop: 0,
+  },
+  View_OuterLayerContainerStyle:{
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginLeft: 15,
+    marginRight: 15,
+    marginTop: 15
+  },
+  View_InnerContainerStyle: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'space-evenly',
+    marginRight: 10,
+  },
 });
 
 export default ComponentStyles;

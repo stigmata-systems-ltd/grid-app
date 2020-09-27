@@ -3,3 +3,4 @@ export const LoginAPI = GLOBAL_VALUE + '/api/auth/authenticate';
 export const GridListAPI = GLOBAL_VALUE + '/api/Reports/GridProgressMap';
 export const GridListDropdownAPI = GLOBAL_VALUE + '/api/Grid/GridNoList';
 export const GridListBasedOnIdAPI = GLOBAL_VALUE + '/api/Grid/GridDetailsById';
+export const LayerDetailsAPI = GLOBAL_VALUE + '/api/Layer/LayerNoList';

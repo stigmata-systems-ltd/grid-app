@@ -11,7 +11,7 @@ export default class NavigationStack extends Component {
     return (
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="GridView"
+          initialRouteName="Dashboard"
           screenOptions={{headerShown: false}}>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Dashboard" component={DashboardScreen} />

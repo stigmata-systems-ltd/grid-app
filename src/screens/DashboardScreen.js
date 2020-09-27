@@ -15,6 +15,7 @@ import MapView, {PROVIDER_GOOGLE, Marker, Polygon} from 'react-native-maps';
 import GeoFencing from 'react-native-geo-fencing';
 import Geolocation from '@react-native-community/geolocation';
 import GridAPI from '../api/GridAPI';
+import AutoCompleteComponent from '../components/AutoCompleteComponent';
 
 export default class DashBoardScreen extends Component {
   constructor(props) {
@@ -31,12 +32,15 @@ export default class DashBoardScreen extends Component {
       currLoc: null,
       gridData: [],
       watchId: '',
-      dataForCenter:{}
+      dataForCenter: {},
     };
   }
 
   componentDidMount = async () => {
-    this.getGridData();
+    let access = await this.accessPermission();
+    if (access) {
+      this.getGridData();
+    }
   };
 
   getCurrentPositionData = async () => {
@@ -60,9 +64,8 @@ export default class DashBoardScreen extends Component {
 
   getGridData = async () => {
     let {gridData, dataForCenter} = await GridAPI.GetGridList();
-    console.log("Date for center" + JSON.stringify(dataForCenter));
     if (gridData !== null) {
-      let initialRegion = this.getDeltas(dataForCenter.lat, dataForCenter.lng);
+      let initialRegion = this.getDeltas(18.9651515, 72.8002582142857);
       this.setState({initialRegion: initialRegion});
       this.setState({gridData: gridData, dataForCenter: dataForCenter});
       gridData.map((polygon) => {
@@ -178,7 +181,7 @@ export default class DashBoardScreen extends Component {
               padding: 15,
             }}>
             <View style={{flex: 4}}>
-            <TextBoxComponent
+              <TextBoxComponent
                 WhereFromValue="Dashboard"
                 onChangeTextHandler={(text) => {
                   this.setState({GridNumber: text});
@@ -189,7 +192,7 @@ export default class DashBoardScreen extends Component {
             </View>
             <TouchableOpacity
               style={{flex: 0.7}}
-              onPress={() => this.props.navigation.navigate("GridView")}>
+              onPress={() => this.props.navigation.navigate('GridView')}>
               <Icon
                 name="search"
                 color="#FFFFFF"
@@ -248,9 +251,9 @@ export default class DashBoardScreen extends Component {
                           <Polygon
                             key={'grid' + marker.lng}
                             coordinates={marker.rectCords}
-                            strokeColor="red"
-                            strokeWidth={3}
-                            fillColor="green"
+                            strokeColor="#135801"
+                            strokeWidth={1}
+                            fillColor="#D2FFC7"
                             onPress={() => {
                               this.polygonHandler(marker);
                             }}
@@ -262,11 +265,12 @@ export default class DashBoardScreen extends Component {
                               latitude: marker.lat,
                               longitude: marker.lng,
                             }}
-                            title={marker.gridNumber}>
+                            onPress={() => {console.log("GridId : " + marker.gridId);this.props.navigation.navigate("GridView", {gridId: marker.gridId})}}>
+                            <Text style={{fontSize:10, fontFamily:'Archivo-Regular'}}>{marker.gridNumber}</Text>
                             <MaterialIcon
                               name="location-pin"
-                              size={50}
-                              color="blue"
+                              size={35}
+                              color={marker.status === "Completed" ? "#46FE18" : marker.status === "InProgress" ? "#FEF74D": "#FFA620"}
                             />
                           </Marker>
                         </>

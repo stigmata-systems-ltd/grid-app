@@ -14,6 +14,8 @@ const GetGridList = async () => {
           gridId: data.lstGridDtls[item].gridId,
           gridNumber: data.lstGridDtls[item].gridno,
           rectCords: getGridCordinates(data.lstGridDtls[item].gridGeoLocation),
+          status: data.lstGridDtls[item].status,
+          gridId: data.lstGridDtls[item].gridId
         };
 
         gridData.push(singleGrid);
