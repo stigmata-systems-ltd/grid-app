@@ -78,6 +78,9 @@ export default class GridViewScreen extends Component {
         <HeaderComponent
           headingValue={this.state.gridDetail.gridno}
           IsDashboard={false}
+          onBackButtonHandler={() => {
+            this.props.navigation.navigate('Dashboard');
+          }}
           gridStatus={this.state.gridDetail.status}></HeaderComponent>
         <ScrollView>
           <View style={GridViewStyles.gridViewUpperContainerStyle}>
@@ -149,7 +152,6 @@ export default class GridViewScreen extends Component {
                 {Object.keys(this.state.layerDetails).length > 0 ? (
                   <AutoCompleteComponent
                     items={this.state.layerDetails}
-                    defaultValue={1}
                     onChangeItemHandler={(item) => {
                       this.onChangeItemHandler(item);
                     }}></AutoCompleteComponent>

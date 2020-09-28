@@ -9,6 +9,10 @@ import App from '../App';
 // Note: test renderer must be required after react-native.
 import renderer from 'react-test-renderer';
 
-it('renders correctly', () => {
-  renderer.create(<App />);
-});
+describe("Sample" , () => {
+  it('renders correctly', () => {
+    let LoginData = renderer.create(<App />).getInstance();
+    console.log(LoginData);
+  });
+})
+

@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 import StatusBarComponent from '../components/StatusBarComponent';
 import HeaderComponent from '../components/HeaderComponent';
-import TextBoxComponent from '../components/TextBoxComponent';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import MapView, {PROVIDER_GOOGLE, Marker, Polygon} from 'react-native-maps';
@@ -33,6 +32,8 @@ export default class DashBoardScreen extends Component {
       gridData: [],
       watchId: '',
       dataForCenter: {},
+      gridDetailsDropdown: [],
+      gridId: '0',
     };
   }
 
@@ -40,6 +41,27 @@ export default class DashBoardScreen extends Component {
     let access = await this.accessPermission();
     if (access) {
       this.getGridData();
+      this.getGridDropdown();
+    }
+  };
+
+  getGridDropdown = async () => {
+    let gridDetailsForDropdown = await GridAPI.GetGridListDropdown();
+    let gridDetailsDropdown = [];
+    if (
+      gridDetailsForDropdown !== null &&
+      gridDetailsForDropdown !== undefined &&
+      Object.keys(gridDetailsForDropdown).length > 0
+    ) {
+      for (let item in gridDetailsForDropdown) {
+        let gridDataItem = {
+          label: gridDetailsForDropdown[item].gridName,
+          value: gridDetailsForDropdown[item].id,
+        };
+        gridDetailsDropdown.push(gridDataItem);
+      }
+      this.setState({gridDetailsDropdown});
+      this.setState({gridId: gridDetailsDropdown[0].value});
     }
   };
 
@@ -115,10 +137,8 @@ export default class DashBoardScreen extends Component {
         },
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('You can use the location');
         return true;
       } else {
-        console.log('Location permission denied');
         return false;
       }
     } catch (err) {
@@ -167,11 +187,38 @@ export default class DashBoardScreen extends Component {
     Geolocation.clearWatch(this.state.watchId);
   };
 
+  getSearchGrid = () => {
+    if (this.state.gridId !== 0) {
+      let gridData = this.state.gridData;
+      let centerRegion = {};
+
+      for (let item in gridData) {
+        if (gridData[item].gridId === this.state.gridId) {
+          gridData[item].gridFillColor = '#2ABA06';
+          centerRegion = this.getDeltas(gridData[item].lat, gridData[item].lng);
+        } else {
+          gridData[item].gridFillColor = '#D2FFC7';
+        }
+      }
+      this.setState({gridData});
+      this.setState({initialRegion: centerRegion});
+    }
+  };
+
+  onChangeItemHandler = (item) => {
+    this.setState({gridId: item.value});
+    if (item.value === 0) {
+      this.getGridData();
+    }
+  };
+
   render() {
     return (
       <View style={{flex: 3, backgroundColor: '#FFFFFF'}}>
         <StatusBarComponent IsVisible={false}></StatusBarComponent>
-        <HeaderComponent headingValue="Dashboard"></HeaderComponent>
+        <HeaderComponent
+          headingValue="Dashboard"
+          IsDashboard={true}></HeaderComponent>
         <View style={{flex: 4, flexDirection: 'row', height: 70, marginTop: 5}}>
           <View
             style={{
@@ -180,19 +227,21 @@ export default class DashBoardScreen extends Component {
               justifyContent: 'space-between',
               padding: 15,
             }}>
-            <View style={{flex: 4}}>
-              <TextBoxComponent
-                WhereFromValue="Dashboard"
-                onChangeTextHandler={(text) => {
-                  this.setState({GridNumber: text});
-                }}
-                textValue={this.state.GridNumber}
-                autoCapitalize="none"
-                secureTextEntry={false}></TextBoxComponent>
+            <View style={{flex: 4, marginTop: 5}}>
+              {Object.keys(this.state.gridDetailsDropdown).length > 0 ? (
+                <AutoCompleteComponent
+                  WhereFromValue="Dashboard"
+                  items={this.state.gridDetailsDropdown}
+                  onChangeItemHandler={(item) => {
+                    this.onChangeItemHandler(item);
+                  }}></AutoCompleteComponent>
+              ) : (
+                <Text></Text>
+              )}
             </View>
             <TouchableOpacity
               style={{flex: 0.7}}
-              onPress={() => this.props.navigation.navigate('GridView')}>
+              onPress={() => this.getSearchGrid()}>
               <Icon
                 name="search"
                 color="#FFFFFF"
@@ -202,6 +251,7 @@ export default class DashBoardScreen extends Component {
                   backgroundColor: '#184589',
                   marginTop: 5,
                   alignSelf: 'center',
+                  borderRadius: 3,
                 }}></Icon>
             </TouchableOpacity>
           </View>
@@ -252,8 +302,8 @@ export default class DashBoardScreen extends Component {
                             key={'grid' + marker.lng}
                             coordinates={marker.rectCords}
                             strokeColor="#135801"
-                            strokeWidth={1}
-                            fillColor="#D2FFC7"
+                            strokeWidth={2}
+                            fillColor={marker.gridFillColor}
                             onPress={() => {
                               this.polygonHandler(marker);
                             }}
@@ -265,12 +315,28 @@ export default class DashBoardScreen extends Component {
                               latitude: marker.lat,
                               longitude: marker.lng,
                             }}
-                            onPress={() => {console.log("GridId : " + marker.gridId);this.props.navigation.navigate("GridView", {gridId: marker.gridId})}}>
-                            <Text style={{fontSize:10, fontFamily:'Archivo-Regular'}}>{marker.gridNumber}</Text>
+                            onPress={() => {
+                              this.props.navigation.navigate('GridView', {
+                                gridId: marker.gridId,
+                              });
+                            }}>
+                            <Text
+                              style={{
+                                fontSize: 10,
+                                fontFamily: 'Archivo-Regular',
+                              }}>
+                              {marker.gridNumber}
+                            </Text>
                             <MaterialIcon
                               name="location-pin"
                               size={35}
-                              color={marker.status === "Completed" ? "#46FE18" : marker.status === "InProgress" ? "#FEF74D": "#FFA620"}
+                              color={
+                                marker.status === 'Completed'
+                                  ? '#46FE18'
+                                  : marker.status === 'InProgress'
+                                  ? '#FEF74D'
+                                  : '#FFA620'
+                              }
                             />
                           </Marker>
                         </>

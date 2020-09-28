@@ -15,6 +15,7 @@
     "@react-native-community/masked-view": "^0.1.10",
     "@react-navigation/native": "^5.7.3",
     "@react-navigation/stack": "^5.9.0",
+    "@testing-library/react-native": "^7.0.2",
     "axios": "^0.20.0",
     "react": "16.13.1",
     "react-native": "0.63.2",
@@ -39,6 +40,12 @@
     "react-test-renderer": "16.13.1"
   },
   "jest": {
-    "preset": "react-native"
+    "preset": "react-native",
+    "setupFiles": [
+      "./setup.js"
+    ],
+    "moduleNameMapper": {
+      "my-module.js": "<rootDir>/path/to/my-module.js"
+    }
   }
 }
