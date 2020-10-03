@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 import StatusBarComponent from '../components/StatusBarComponent';
 import HeaderComponent from '../components/HeaderComponent';
-import TextBoxComponent from '../components/TextBoxComponent';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import MapView, {PROVIDER_GOOGLE, Marker, Polygon} from 'react-native-maps';
@@ -16,6 +15,7 @@ import GeoFencing from 'react-native-geo-fencing';
 import Geolocation from '@react-native-community/geolocation';
 import GridAPI from '../api/GridAPI';
 import AutoCompleteComponent from '../components/AutoCompleteComponent';
+import gridData from '../gridData';
 
 export default class DashBoardScreen extends Component {
   constructor(props) {
@@ -29,10 +29,14 @@ export default class DashBoardScreen extends Component {
         latitudeDelta: 0.001,
         longitudeDelta: 0.001,
       },
+      isCurrentLocationHandled: false,
       currLoc: null,
       gridData: [],
       watchId: '',
       dataForCenter: {},
+      gridDetailsDropdown: [],
+      gridId: '0',
+      currentGridDetails: '',
     };
   }
 
@@ -40,6 +44,27 @@ export default class DashBoardScreen extends Component {
     let access = await this.accessPermission();
     if (access) {
       this.getGridData();
+      this.getGridDropdown();
+    }
+  };
+
+  getGridDropdown = async () => {
+    let gridDetailsForDropdown = await GridAPI.GetGridListDropdown();
+    let gridDetailsDropdown = [];
+    if (
+      gridDetailsForDropdown !== null &&
+      gridDetailsForDropdown !== undefined &&
+      Object.keys(gridDetailsForDropdown).length > 0
+    ) {
+      for (let item in gridDetailsForDropdown) {
+        let gridDataItem = {
+          label: gridDetailsForDropdown[item].gridName,
+          value: gridDetailsForDropdown[item].id,
+        };
+        gridDetailsDropdown.push(gridDataItem);
+      }
+      this.setState({gridDetailsDropdown});
+      this.setState({gridId: gridDetailsDropdown[0].value});
     }
   };
 
@@ -83,23 +108,23 @@ export default class DashBoardScreen extends Component {
           longitude: gridData[0].lng,
         };
         position.coords = coords;
-        this.geoLocationHandler(position, polygonDetail, polygon.title);
+        this.geoLocationHandler(position, polygonDetail, polygon.gridNumber);
       });
     }
   };
 
-  setCurrentLocation = () => {
-    let watchId = Geolocation.watchPosition(
-      (position) => {
-        this.setState({currLoc: position});
-      },
-      (err) => {
-        err;
-      },
-      {enableHighAccuracy: true, distanceFilter: 1},
-    );
-    this.setState({watchId: watchId});
-  };
+  // setCurrentLocation = () => {
+  //   let watchId = Geolocation.watchPosition(
+  //     (position) => {
+  //       this.setState({currLoc: position});
+  //     },
+  //     (err) => {
+  //       err;
+  //     },
+  //     {enableHighAccuracy: true, distanceFilter: 1},
+  //   );
+  //   this.setState({watchId: watchId});
+  // };
 
   accessPermission = async () => {
     try {
@@ -115,10 +140,8 @@ export default class DashBoardScreen extends Component {
         },
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('You can use the location');
         return true;
       } else {
-        console.log('Location permission denied');
         return false;
       }
     } catch (err) {
@@ -135,12 +158,15 @@ export default class DashBoardScreen extends Component {
 
     GeoFencing.containsLocation(pointDetail, polygon)
       .then(() => {
+        console.log("Hitted" + title);
         this.setState({
-          currentGridDetails: 'within area. Grid Name :' + title,
+          currentGridDetails: title !== undefined ? 'Currently in the grid : ' + title : "",
         });
         return;
       })
-      .catch(() => {});
+      .catch(() => {
+       
+      });
   };
 
   polygonHandler = (markerDetails) => {
@@ -164,14 +190,117 @@ export default class DashBoardScreen extends Component {
   };
 
   ClearWatch = () => {
+    console.log('Clear Watch ' + this.state.watchId);
     Geolocation.clearWatch(this.state.watchId);
+  };
+
+  getSearchGrid = () => {
+    if (this.state.gridId !== 0) {
+      let gridData = this.state.gridData;
+      let centerRegion = {};
+
+      for (let item in gridData) {
+        if (gridData[item].gridId === this.state.gridId) {
+          gridData[item].gridFillColor = '#2ABA06';
+          centerRegion = this.getDeltas(gridData[item].lat, gridData[item].lng);
+        } else {
+          gridData[item].gridFillColor = '#D2FFC7';
+        }
+      }
+      this.setState({gridData});
+      this.setState({initialRegion: centerRegion});
+    }
+  };
+
+  onChangeItemHandler = (item) => {
+    this.setState({gridId: item.value});
+    if (item.value === 0) {
+      this.getGridData();
+    }
+  };
+
+  locationHandler = async () => {
+    if (!this.state.isCurrentLocationHandled) {
+      this.getGridData();
+      let access = await this.accessPermission();
+      let initialPosition = null;
+      if (access) {
+        this.setState({isCurrentLocationHandled: true});
+        await Geolocation.getCurrentPosition(
+          (position) => {
+            initialPosition = JSON.stringify(position);
+            console.log(initialPosition);
+            this.setState({
+              initialRegion: {
+                longitude: position.coords.longitude,
+                latitude: position.coords.latitude,
+                latitudeDelta: 0.001,
+                longitudeDelta: 0.001,
+              }
+            });
+            this.state.gridData.map((polygon) => {
+              let polygonDetail = [];
+              polygon.rectCords.map((pot) => {
+                let polypot = {
+                  lat: pot.latitude,
+                  lng: pot.longitude,
+                };
+                polygonDetail.push(polypot);
+              });
+              console.log("Position Details : " + JSON.stringify(position))
+              this.geoLocationHandler(position, polygonDetail, polygon.gridNumber);
+            });
+            if (this.state.isCurrentLocationHandled) {
+              let watchId = Geolocation.watchPosition(
+                (position) => {
+                  this.setState({currLoc: position});
+                  this.state.gridData.map((polygon) => {
+                    let polygonDetail = [];
+                    polygon.rectCords.map((pot) => {
+                      let polypot = {
+                        lat: pot.latitude,
+                        lng: pot.longitude,
+                      };
+                      polygonDetail.push(polypot);
+                    });
+    
+                    this.geoLocationHandler(position, polygonDetail, polygon.gridNumber);
+                  });
+                },
+                (err) => {
+                  err;
+                },
+                {enableHighAccuracy: true, distanceFilter: 1},
+              );
+              this.setState({watchId: watchId});
+            }
+          },
+          (error) => alert(error.message),
+          {
+            timeout: 20000,
+            distanceFilter: 0,
+          },
+        );
+      }
+    } else {
+      this.setState({isCurrentLocationHandled: false, currLoc: null});
+      this.ClearWatch();
+      let access = await this.accessPermission();
+      if (access) {
+        this.getGridData();
+        this.getGridDropdown();
+      }
+      Geolocation.stopObserving();
+    }
   };
 
   render() {
     return (
       <View style={{flex: 3, backgroundColor: '#FFFFFF'}}>
         <StatusBarComponent IsVisible={false}></StatusBarComponent>
-        <HeaderComponent headingValue="Dashboard"></HeaderComponent>
+        <HeaderComponent
+          headingValue="Dashboard"
+          IsDashboard={true}></HeaderComponent>
         <View style={{flex: 4, flexDirection: 'row', height: 70, marginTop: 5}}>
           <View
             style={{
@@ -180,19 +309,21 @@ export default class DashBoardScreen extends Component {
               justifyContent: 'space-between',
               padding: 15,
             }}>
-            <View style={{flex: 4}}>
-              <TextBoxComponent
-                WhereFromValue="Dashboard"
-                onChangeTextHandler={(text) => {
-                  this.setState({GridNumber: text});
-                }}
-                textValue={this.state.GridNumber}
-                autoCapitalize="none"
-                secureTextEntry={false}></TextBoxComponent>
+            <View style={{flex: 4, marginTop: 5}}>
+              {Object.keys(this.state.gridDetailsDropdown).length > 0 ? (
+                <AutoCompleteComponent
+                  WhereFromValue="Dashboard"
+                  items={this.state.gridDetailsDropdown}
+                  onChangeItemHandler={(item) => {
+                    this.onChangeItemHandler(item);
+                  }}></AutoCompleteComponent>
+              ) : (
+                <Text></Text>
+              )}
             </View>
             <TouchableOpacity
               style={{flex: 0.7}}
-              onPress={() => this.props.navigation.navigate('GridView')}>
+              onPress={() => this.getSearchGrid()}>
               <Icon
                 name="search"
                 color="#FFFFFF"
@@ -202,18 +333,30 @@ export default class DashBoardScreen extends Component {
                   backgroundColor: '#184589',
                   marginTop: 5,
                   alignSelf: 'center',
+                  borderRadius: 3,
                 }}></Icon>
             </TouchableOpacity>
           </View>
           <View style={{flex: 1}}>
             <View style={{marginTop: 17}}>
-              <MaterialIcon
-                name="my-location"
-                size={35}
-                style={{padding: 5}}></MaterialIcon>
+              <TouchableOpacity
+                onPress={() => {
+                  this.locationHandler();
+                }}>
+                <MaterialIcon
+                  name="my-location"
+                  size={35}
+                  style={{padding: 5}}
+                  color={this.state.isCurrentLocationHandled ? "green" : "red"}></MaterialIcon>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
+        {this.state.isCurrentLocationHandled ? <View>
+          <Text style={styles.blinkTwoStyle}>
+            {this.state.currentGridDetails}
+          </Text>
+        </View> : <View></View>}
         <View
           style={{
             flex: 28,
@@ -252,8 +395,8 @@ export default class DashBoardScreen extends Component {
                             key={'grid' + marker.lng}
                             coordinates={marker.rectCords}
                             strokeColor="#135801"
-                            strokeWidth={1}
-                            fillColor="#D2FFC7"
+                            strokeWidth={2}
+                            fillColor={marker.gridFillColor}
                             onPress={() => {
                               this.polygonHandler(marker);
                             }}
@@ -265,12 +408,28 @@ export default class DashBoardScreen extends Component {
                               latitude: marker.lat,
                               longitude: marker.lng,
                             }}
-                            onPress={() => {console.log("GridId : " + marker.gridId);this.props.navigation.navigate("GridView", {gridId: marker.gridId})}}>
-                            <Text style={{fontSize:10, fontFamily:'Archivo-Regular'}}>{marker.gridNumber}</Text>
+                            onPress={() => {
+                              this.props.navigation.navigate('GridView', {
+                                gridId: marker.gridId,
+                              });
+                            }}>
+                            <Text
+                              style={{
+                                fontSize: 10,
+                                fontFamily: 'Archivo-Regular',
+                              }}>
+                              {marker.gridNumber}
+                            </Text>
                             <MaterialIcon
                               name="location-pin"
                               size={35}
-                              color={marker.status === "Completed" ? "#46FE18" : marker.status === "InProgress" ? "#FEF74D": "#FFA620"}
+                              color={
+                                marker.status === 'Completed'
+                                  ? '#46FE18'
+                                  : marker.status === 'InProgress'
+                                  ? '#FEF74D'
+                                  : '#FFA620'
+                              }
                             />
                           </Marker>
                         </>
@@ -297,5 +456,17 @@ const styles = StyleSheet.create({
   },
   mapView: {
     height: '100%',
+  },
+  blinkOneStyle: {
+    paddingLeft: 10,
+    fontSize: 15,
+    fontFamily: 'Archivo-Regular',
+    color: 'red',
+  },
+  blinkTwoStyle: {
+    paddingLeft: 10,
+    fontSize: 15,
+    fontFamily: 'Archivo-Regular',
+    color: 'green',
   },
 });

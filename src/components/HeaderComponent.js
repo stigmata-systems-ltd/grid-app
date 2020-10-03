@@ -4,6 +4,7 @@ import {DASHBOARD_LOGO} from '../assets/index';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import ComponentStyle from '../styles/ComponentStyle';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default class HeaderComponent extends Component {
   render() {
@@ -16,11 +17,13 @@ export default class HeaderComponent extends Component {
                 source={DASHBOARD_LOGO}
                 style={ComponentStyle.HeaderLogoStyle}></Image>
             ) : (
+              <TouchableOpacity onPress={this.props.onBackButtonHandler}>
               <MaterialIcon
                 name="arrow-back"
                 size={50}
                 style={ComponentStyle.HeaderLeftArrowStyle}
               />
+              </TouchableOpacity>
             )}
           </View>
           <View style={ComponentStyle.HeaderTextContainerStyle}>
@@ -64,7 +67,8 @@ export default class HeaderComponent extends Component {
                     marginTop: 2,
                   }}>
                 </View>
-              </View>) : (<View>
+              </View>) : 
+              this.props.gridStatus == "Completed" ? (<View>
                 <Text>Completed</Text>
                 <View
                   style={{
@@ -76,7 +80,7 @@ export default class HeaderComponent extends Component {
                     marginTop: 2,
                   }}>
                 </View>
-              </View>)
+              </View>) : (<View></View>)
             )}
           </View>
         </View>
