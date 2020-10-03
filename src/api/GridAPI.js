@@ -28,8 +28,8 @@ const GetGridList = async () => {
     };
     return {gridData, dataForCenter};
   } catch (err) {
-    console.log('Errr');
-    return err;
+    console.log('Errr' + err);
+    return null;
   }
 };
 
@@ -41,7 +41,7 @@ const GetGridListDropdown = async () => {
     return data;
   } catch (err) {
     console.log('Errr');
-    return err;
+    return null;
   }
 };
 

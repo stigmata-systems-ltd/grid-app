@@ -135,7 +135,7 @@ const ComponentStyles = StyleSheet.create({
     marginVertical: 32,
   },
   HeaderTextStyle: {
-    fontSize: 25,
+    fontSize: 20,
     fontFamily: 'Archivo-Regular',
     textAlign: 'center',
   },

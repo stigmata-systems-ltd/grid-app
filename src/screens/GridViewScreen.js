@@ -22,6 +22,7 @@ export default class GridViewScreen extends Component {
       layerDetails: [],
       layerCount: 0,
       tabViewIndex: 1,
+      isHavingLayer: false
     };
   }
 
@@ -48,17 +49,67 @@ export default class GridViewScreen extends Component {
       let layerCountDetails = gridDataBasedOnId.lyrDtls.filter((item) => {
         return item.status === 'InProgress';
       });
+      
       this.setState({
         gridDetail: gridDataBasedOnId,
         layerDetails: layerDetails,
-        layerId: layerDetails[0].value,
+        layerId: layerDetails.length > 0 ? layerDetails[0].value : "",
         currentLayerDetail: gridDataBasedOnId.lyrDtls[0],
         layerCount: layerCountDetails.length,
+        isHavingLayer: layerDetails.length > 0 ? true : false,
       });
     }
   };
 
+  // componentDidUpdate = async (prevProps) => {
+  //   if (this.props.route.params.gridId.toString() !== prevProps.route.params.gridId.toString()) {
+  //     this.state = {
+  //       gridDetail: {},
+  //       tabViewIndex: 0,
+  //       layerId: '0',
+  //       currentLayerDetail: {},
+  //       layerDetails: [],
+  //       layerCount: 0,
+  //       tabViewIndex: 1,
+  //     };
+  //     let gridDataBasedOnId = await GridAPI.GetGridListDetailsById(
+  //       this.props.route.params.gridId.toString(),
+  //     );
+  //     let layerDetailsOriginal = await LayerAPI.GetLayerDetails();
+  //     let layerDetails = [];
+  //     if (layerDetailsOriginal !== undefined && layerDetailsOriginal !== null) {
+  //       for (var item in layerDetailsOriginal) {
+  //         let grid = null;
+  //         grid = gridDataBasedOnId.lyrDtls.filter((g) => {
+  //           return g.layerId === layerDetailsOriginal[item].id;
+  //         });
+  //         if (Object.keys(grid).length > 0) {
+  //           let layer = {
+  //             label: layerDetailsOriginal[item].layerName,
+  //             value: layerDetailsOriginal[item].id,
+  //           };
+  //           layerDetails.push(layer);
+  //         }
+  //       }
+  //     }
+  //     if (gridDataBasedOnId != null && gridDataBasedOnId != undefined) {
+  //       let layerCountDetails = gridDataBasedOnId.lyrDtls.filter((item) => {
+  //         return item.status === 'InProgress';
+  //       });
+  //       this.setState({
+  //         gridDetail: gridDataBasedOnId,
+  //         layerDetails: layerDetails,
+  //         layerId: layerDetails.length > 0 ? layerDetails[0].value : "",
+  //         currentLayerDetail: gridDataBasedOnId.lyrDtls.length > 0 ? gridDataBasedOnId.lyrDtls[0] : null,
+  //         layerCount: layerCountDetails.length,
+  //         isHavingLayer: layerDetails.length > 0 ? true : false,
+  //       });
+  //     }
+  //   }
+  // };
+
   uploadImageHandler = () => {
+    //  this.props.navigation.navigate("LayerUpload");
     console.log(this.state.layerId);
   };
 
@@ -147,6 +198,7 @@ export default class GridViewScreen extends Component {
                 {GridViewConstant.LAYER_DETAILS}
               </Text>
             </View>
+            {this.state.isHavingLayer ? (
             <View style={GridViewStyles.gridView_DropDownOuterContainerStyle}>
               <View style={GridViewStyles.gridView_DropDownInnerContainerStyle}>
                 {Object.keys(this.state.layerDetails).length > 0 ? (
@@ -170,8 +222,8 @@ export default class GridViewScreen extends Component {
                   </View>
                 </TouchableOpacity>
               </View>
-            </View>
-            <View
+            </View>) : (<View></View>)}
+            {this.state.isHavingLayer ? (<View
               style={GridViewStyles.gridView_DetailButtonOuterContainerStyle}>
               <View
                 style={GridViewStyles.gridView_DetailButtonInnerContainerStyle}>
@@ -356,7 +408,7 @@ export default class GridViewScreen extends Component {
                     isLayer={false}></ViewComponent>
                 </>
               )}
-            </View>
+            </View>) : (<View></View>)}
           </View>
         </ScrollView>
       </View>

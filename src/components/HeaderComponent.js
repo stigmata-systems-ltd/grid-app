@@ -67,7 +67,8 @@ export default class HeaderComponent extends Component {
                     marginTop: 2,
                   }}>
                 </View>
-              </View>) : (<View>
+              </View>) : 
+              this.props.gridStatus == "Completed" ? (<View>
                 <Text>Completed</Text>
                 <View
                   style={{
@@ -79,7 +80,7 @@ export default class HeaderComponent extends Component {
                     marginTop: 2,
                   }}>
                 </View>
-              </View>)
+              </View>) : (<View></View>)
             )}
           </View>
         </View>

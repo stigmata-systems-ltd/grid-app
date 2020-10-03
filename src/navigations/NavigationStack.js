@@ -4,6 +4,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import LoginScreen from '../screens/LoginScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import GridViewScreen from '../screens/GridViewScreen';
+import LayerUploadScreen from '../screens/LayerUploadScreen';
 
 export default class NavigationStack extends Component {
   render() {
@@ -11,11 +12,12 @@ export default class NavigationStack extends Component {
     return (
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="Dashboard"
+          initialRouteName="Login"
           screenOptions={{headerShown: false}}>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
           <Stack.Screen name="GridView" component={GridViewScreen} />
+          <Stack.Screen name="LayerUpload" component={LayerUploadScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     );
