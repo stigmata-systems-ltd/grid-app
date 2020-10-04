@@ -9,13 +9,14 @@ import ButtonComponent from '../components/ButtonComponent';
 import CheckBoxComponent from '../components/CheckBoxComponent';
 import * as LoginConstant from '../constants/LoginConstant';
 import LoginAPI from '../api/LoginAPI';
+import {decode as atob, encode as btoa} from 'base-64';
 
 export default class LoginScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      Username: 'adminrole',
-      Password: '@scn@pW0Ld',
+      Username: 'admin',
+      Password: 'admin',
       RememberMe: false,
       IsLoaded: false,
     };
@@ -42,6 +43,7 @@ export default class LoginScreen extends Component {
         Username: this.state.Username,
         Password: this.state.Password,
       };
+      console.log(JSON.stringify(userDetails));
       let result = await LoginAPI.LoginValidation(userDetails);
       if (!result.isValidated) {
         this.showToast(result.message);
