@@ -18,7 +18,6 @@ const GetGridList = async () => {
         gridId: data.lstGridDtls[item].gridId,
         gridFillColor: '#D2FFC7',
       };
-
       gridData.push(singleGrid);
       i++;
     }
@@ -46,6 +45,7 @@ const GetGridListDropdown = async () => {
 };
 
 getGridCordinates = (gridLocations) => {
+  
   let locationDetails = [];
   for (var item in gridLocations) {
     let locationDetail = {
@@ -54,10 +54,12 @@ getGridCordinates = (gridLocations) => {
     };
     locationDetails.push(locationDetail);
   }
-  locationDetails.push({
-    latitude: gridLocations[0].latitude,
-    longitude: gridLocations[0].longitude,
-  });
+  if (Object.keys(locationDetails).length > 0) {
+    locationDetails.push({
+      latitude: gridLocations[0].latitude,
+      longitude: gridLocations[0].longitude,
+    });
+  }
   return locationDetails;
 };
 

@@ -8,6 +8,7 @@ const LoginValidation = async (userDetails) => {
     AsyncStorage.setItem('userAuth', JSON.stringify(res.data));
     return JSON.parse('{"message":"' + res.data + '", "isValidated":true}');
   } catch (err) {
+    console.log(err.response.data.message);
     return JSON.parse(
       '{"message":"' + err.response.data.message + '", "isValidated":false}',
     );
