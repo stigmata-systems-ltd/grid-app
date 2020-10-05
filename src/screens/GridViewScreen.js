@@ -16,18 +16,22 @@ export default class GridViewScreen extends Component {
     super(props);
     this.state = {
       gridDetail: {},
+      gridId: '0',
       tabViewIndex: 0,
       layerId: '0',
+      layerName: "",
       currentLayerDetail: {},
       layerDetails: [],
       layerCount: 0,
       tabViewIndex: 1,
-      isHavingLayer: false
+      isHavingLayer: false,
+      layerDetailsId: 0
     };
   }
 
   componentDidMount = async () => {
-    let gridDataBasedOnId = await GridAPI.GetGridListDetailsById(110);
+    this.setState({gridId: this.props.route.params.gridId});
+    let gridDataBasedOnId = await GridAPI.GetGridListDetailsById(this.props.route.params.gridId);
     let layerDetailsOriginal = await LayerAPI.GetLayerDetails();
     let layerDetails = [];
     if (layerDetailsOriginal !== undefined && layerDetailsOriginal !== null) {
@@ -54,71 +58,93 @@ export default class GridViewScreen extends Component {
         gridDetail: gridDataBasedOnId,
         layerDetails: layerDetails,
         layerId: layerDetails.length > 0 ? layerDetails[0].value : "",
+        layerDetailsId: layerDetails.length > 0 ? layerDetails[0].layerDtlsId : "",
         currentLayerDetail: gridDataBasedOnId.lyrDtls[0],
         layerCount: layerCountDetails.length,
         isHavingLayer: layerDetails.length > 0 ? true : false,
+      }, () =>{
+        let layerDetails = this.state.gridDetail.lyrDtls.filter((layer) => {
+          return layer.layerId === this.state.layerDetails[0].value;
+        });
+        if (layerDetails !== null && layerDetails !== undefined && layerDetails.length > 0) {
+          this.setState({currentLayerDetail: this.state.layerDetails[0], layerId: this.state.layerDetails[0].value, layerName: this.state.layerDetails[0].label, layerDetailsId: layerDetails[0].layerDtlsId});
+        }
       });
     }
   };
 
-  // componentDidUpdate = async (prevProps) => {
-  //   if (this.props.route.params.gridId.toString() !== prevProps.route.params.gridId.toString()) {
-  //     this.state = {
-  //       gridDetail: {},
-  //       tabViewIndex: 0,
-  //       layerId: '0',
-  //       currentLayerDetail: {},
-  //       layerDetails: [],
-  //       layerCount: 0,
-  //       tabViewIndex: 1,
-  //     };
-  //     let gridDataBasedOnId = await GridAPI.GetGridListDetailsById(
-  //       this.props.route.params.gridId.toString(),
-  //     );
-  //     let layerDetailsOriginal = await LayerAPI.GetLayerDetails();
-  //     let layerDetails = [];
-  //     if (layerDetailsOriginal !== undefined && layerDetailsOriginal !== null) {
-  //       for (var item in layerDetailsOriginal) {
-  //         let grid = null;
-  //         grid = gridDataBasedOnId.lyrDtls.filter((g) => {
-  //           return g.layerId === layerDetailsOriginal[item].id;
-  //         });
-  //         if (Object.keys(grid).length > 0) {
-  //           let layer = {
-  //             label: layerDetailsOriginal[item].layerName,
-  //             value: layerDetailsOriginal[item].id,
-  //           };
-  //           layerDetails.push(layer);
-  //         }
-  //       }
-  //     }
-  //     if (gridDataBasedOnId != null && gridDataBasedOnId != undefined) {
-  //       let layerCountDetails = gridDataBasedOnId.lyrDtls.filter((item) => {
-  //         return item.status === 'InProgress';
-  //       });
-  //       this.setState({
-  //         gridDetail: gridDataBasedOnId,
-  //         layerDetails: layerDetails,
-  //         layerId: layerDetails.length > 0 ? layerDetails[0].value : "",
-  //         currentLayerDetail: gridDataBasedOnId.lyrDtls.length > 0 ? gridDataBasedOnId.lyrDtls[0] : null,
-  //         layerCount: layerCountDetails.length,
-  //         isHavingLayer: layerDetails.length > 0 ? true : false,
-  //       });
-  //     }
-  //   }
-  // };
+  componentDidUpdate = async (prevProps) => {
+    if (this.props.route.params.gridId.toString() !== prevProps.route.params.gridId.toString()) {
+      this.state = {
+        gridDetail: {},
+        tabViewIndex: 0,
+        layerId: '0',
+        currentLayerDetail: {},
+        layerDetails: [],
+        layerCount: 0,
+        tabViewIndex: 1,
+        gridId: '0'
+      };
+      this.setState({gridId: this.props.route.params.gridId});
+      let gridDataBasedOnId = await GridAPI.GetGridListDetailsById(
+        this.props.route.params.gridId.toString(),
+      );
+      let layerDetailsOriginal = await LayerAPI.GetLayerDetails();
+      let layerDetails = [];
+      if (layerDetailsOriginal !== undefined && layerDetailsOriginal !== null) {
+        for (var item in layerDetailsOriginal) {
+          let grid = null;
+          grid = gridDataBasedOnId.lyrDtls.filter((g) => {
+            return g.layerId === layerDetailsOriginal[item].id;
+          });
+          if (Object.keys(grid).length > 0) {
+            let layer = {
+              label: layerDetailsOriginal[item].layerName,
+              value: layerDetailsOriginal[item].id,
+            };
+            layerDetails.push(layer);
+          }
+        }
+      }
+      if (gridDataBasedOnId != null && gridDataBasedOnId != undefined) {
+        let layerCountDetails = gridDataBasedOnId.lyrDtls.filter((item) => {
+          return item.status === 'InProgress';
+        });
+        
+        this.setState({
+          gridDetail: gridDataBasedOnId,
+          layerDetails: layerDetails,
+          layerId: layerDetails.length > 0 ? layerDetails[0].value : "",
+          currentLayerDetail: gridDataBasedOnId.lyrDtls.length > 0 ? gridDataBasedOnId.lyrDtls[0] : null,
+          layerCount: layerCountDetails.length,
+          isHavingLayer: layerDetails.length > 0 ? true : false,
+        }, () =>{
+          let layerDetails = this.state.gridDetail.lyrDtls.filter((layer) => {
+            return layer.layerId === this.state.layerDetails[0].value;
+          });
+          if (layerDetails !== null && layerDetails !== undefined && layerDetails.length > 0) {
+            this.setState({currentLayerDetail: this.state.layerDetails[0], layerId: this.state.layerDetails[0].value, layerName: this.state.layerDetails[0].label, layerDetailsId: layerDetails[0].layerDtlsId});
+          }
+        });
+      }
+    }
+  };
 
   uploadImageHandler = () => {
-    //  this.props.navigation.navigate("LayerUpload");
-    console.log(this.state.layerId);
+      this.props.navigation.navigate("LayerUpload", {
+        layerDetailsId: this.state.layerDetailsId,
+        layerName: this.state.layerName,
+        gridId: this.state.gridId
+      });
+      console.log("Layer :  " + this.state.layerDetailsId);
   };
 
   onChangeItemHandler = (item) => {
     let layerDetails = this.state.gridDetail.lyrDtls.filter((layer) => {
       return layer.layerId === item.value;
     });
-    if (layerDetails !== null) {
-      this.setState({currentLayerDetail: layerDetails[0], layerId: item.value});
+    if (layerDetails !== null && layerDetails !== undefined && layerDetails.length > 0) {
+      this.setState({currentLayerDetail: layerDetails[0], layerId: item.value, layerName: item.label, layerDetailsId: layerDetails[0].layerDtlsId});
     }
   };
 

@@ -20,7 +20,7 @@ export default class HeaderComponent extends Component {
               <TouchableOpacity onPress={this.props.onBackButtonHandler}>
               <MaterialIcon
                 name="arrow-back"
-                size={50}
+                size={40}
                 style={ComponentStyle.HeaderLeftArrowStyle}
               />
               </TouchableOpacity>
@@ -34,8 +34,8 @@ export default class HeaderComponent extends Component {
           <View style={ComponentStyle.HeaderUserContainerStyle}>
             {this.props.IsDashboard === true ? (
               <Icon
-                name="user-circle"
-                size={50}
+                name="refresh"
+                size={30}
                 style={ComponentStyle.HeaderUserStyle}
               />
             ) : (

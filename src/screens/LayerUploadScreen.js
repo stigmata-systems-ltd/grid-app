@@ -1,62 +1,159 @@
 import React, {Component} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {
+  View,
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  ScrollView,
+  Dimensions,
+} from 'react-native';
+import * as Images from '../assets/index';
 import StatusBarComponent from '../components/StatusBarComponent';
-import HeaderComponent from '../components/HeaderComponent'; 
+import HeaderComponent from '../components/HeaderComponent';
 import ButtonComponent from '../components/ButtonComponent';
-import { RNCamera, FaceDetector } from 'react-native-camera';
+import ImagePicker from 'react-native-image-picker';
+import LayerAPI from '../api/LayerAPI';
+import {Image} from 'react-native-elements';
+import * as APIConstants from '../constants/APIConstants';
 
 export default class LayerUploadScreen extends Component {
-  takePicture = async () => {
-    if (this.camera) {
-      const options = { quality: 0.5, base64: true };
-      const data = await this.camera.takePictureAsync(options);
-      console.log(data.uri);
+  constructor(props) {
+    super(props);
+    this.state = {
+      options: {
+        title: 'Select Avatar',
+        customButtons: [{name: 'fb', title: 'Choose Photo from Facebook'}],
+        storageOptions: {skipBackup: true, path: 'images'},
+      },
+      imageResponse: {},
+      layerImages: [],
+      layerName: '',
+      gridId: '0',
+    };
+  }
+
+  componentDidMount = async () => {
+    this.setState({
+      layerName: this.props.route.params.layerName,
+      gridId: this.props.route.params.gridId,
+    });
+    let LayerListDetails = await LayerAPI.GetLayerListDetails(
+      this.props.route.params.layerDetailsId,
+    );
+
+    if (
+      LayerListDetails !== null &&
+      LayerListDetails !== undefined &&
+      LayerListDetails.length > 0
+    ) {
+      let layerImages = LayerListDetails[0].layerDocs.filter((layer) => {
+        return layer.uploadType === 'Images';
+      });
+      this.setState({layerImages});
     }
   };
+
+  componentDidUpdate = async (prevProps) => {
+    if (
+      this.props.route.params.layerDetailsId.toString() !==
+      prevProps.route.params.layerDetailsId.toString()
+    ) {
+      let LayerListDetails = await LayerAPI.GetLayerListDetails(
+        this.props.route.params.layerDetailsId,
+      );
+      this.setState({
+        layerName: this.props.route.params.layerName,
+        gridId: this.props.route.params.gridId,
+      });
+      if (LayerListDetails !== null || LayerListDetails !== undefined) {
+        let layerImages = LayerListDetails[0].layerDocs.filter((layer) => {
+          return layer.uploadType === 'Images';
+        });
+        this.setState({layerImages});
+      }
+    }
+  };
+
+  imagePickerHandler = (options) => {
+    ImagePicker.showImagePicker(options, (response) => {
+      let imageDetail = {
+        sourceURL: response.uri,
+        mime: response.type,
+        filename: response.fileName,
+      };
+      let responseq = LayerAPI.LayerUpload(13, imageDetail);
+
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else if (response.customButton) {
+        console.log('User tapped custom button: ', response.customButton);
+      } else {
+        //console.log("Reponse Value : " + response.data.type);
+        // You can also display the image using data:
+        // const source = { uri: 'data:image/jpeg;base64,' + response.data };
+        // this.setState({
+        //   avatarSource: source,
+        // });
+      }
+    });
+  };
+
   render() {
+    let options = {
+      title: 'Select Avatar',
+      storageOptions: {skipBackup: true, path: 'images'},
+    };
+    let host = APIConstants.GLOBAL_VALUE;
     return (
-      <View style={{flex: 3, backgroundColor: '#FFFFFF'}}>
+      <ScrollView style={{flex: 4, backgroundColor: '#FFFFFF'}}>
         <StatusBarComponent IsVisible={false}></StatusBarComponent>
         <HeaderComponent
-          headingValue="Layer Number"
+          headingValue={this.state.layerName}
           IsDashboard={false}
           onBackButtonHandler={() => {
-            this.props.navigation.navigate('Dashboard');
+            this.props.navigation.navigate('GridView', {
+              gridId: this.state.gridId,
+            });
           }}></HeaderComponent>
-          <View style={{flex:1, justifyContent:'center', flexDirection:'row', padding:20}}>
-            <ButtonComponent titleValue="Upload"></ButtonComponent>
-          </View>
-          <View style={styles.container}>
-        <RNCamera
-          ref={ref => {
-            this.camera = ref;
-          }}
-          style={styles.preview}
-          type={RNCamera.Constants.Type.back}
-          flashMode={RNCamera.Constants.FlashMode.off}
-          androidCameraPermissionOptions={{
-            title: 'Permission to use camera',
-            message: 'We need your permission to use your camera',
-            buttonPositive: 'Ok',
-            buttonNegative: 'Cancel',
-          }}
-          androidRecordAudioPermissionOptions={{
-            title: 'Permission to use audio recording',
-            message: 'We need your permission to use your audio',
-            buttonPositive: 'Ok',
-            buttonNegative: 'Cancel',
-          }}
-          onGoogleVisionBarcodesDetected={({ barcodes }) => {
-            console.log(barcodes);
-          }}
-        />
-        <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'center' }}>
-          <TouchableOpacity onPress={this.takePicture.bind(this)} style={styles.capture}>
-            <Text style={{ fontSize: 14 }}> SNAP </Text>
-          </TouchableOpacity>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            flexDirection: 'row',
+            padding: 20,
+          }}>
+          <ButtonComponent
+            titleValue="       Upload      "
+            onPressHandler={() =>
+              this.imagePickerHandler(options)
+            }></ButtonComponent>
         </View>
-      </View>
-      </View>
+        <View
+          style={{
+            flex: 1,
+            flexDirection: 'column',
+            padding: 20,
+          }}>
+          {this.state.layerImages.map((layer) => {
+            let uri = host + '\\' + layer.filepath;
+            return (
+              <View>
+                <Image
+                  source={{uri: uri}}
+                  style={{
+                    resizeMode: 'cover',
+                    height: 100,
+                    width: Dimensions.get('window').width,
+                    margin: 20,
+                  }}
+                />
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
     );
   }
 }
