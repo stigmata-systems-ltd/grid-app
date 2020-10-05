@@ -19,6 +19,7 @@
     "@testing-library/react-native": "^7.0.2",
     "axios": "^0.20.0",
     "base-64": "^0.1.0",
+    "form-data": "^3.0.0",
     "react": "16.13.1",
     "react-native": "0.63.2",
     "react-native-blink-view": "0.0.6",

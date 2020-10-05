@@ -41,7 +41,7 @@ export default class LoginScreen extends Component {
       this.setState({IsLoaded: true})
       let userDetails = {
         Username: this.state.Username,
-        Password: this.state.Password,
+        Password: btoa(this.state.Password),
       };
       console.log(JSON.stringify(userDetails));
       let result = await LoginAPI.LoginValidation(userDetails);

@@ -133,6 +133,7 @@ const ComponentStyles = StyleSheet.create({
     justifyContent: 'center',
     alignContent: 'center',
     marginVertical: 32,
+    marginLeft:-20
   },
   HeaderTextStyle: {
     fontSize: 20,
@@ -147,10 +148,11 @@ const ComponentStyles = StyleSheet.create({
   },
   HeaderUserStyle: {
     marginRight: -30,
+    marginTop:10
   },
   HeaderLeftArrowStyle: {
     marginLeft: 20,
-    marginTop: 10,
+    marginTop: 15,
   },
   GridView_AutoCompleteComponentStyle: {
     backgroundColor: '#F1F4F8',
