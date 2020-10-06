@@ -22,15 +22,18 @@ const GetLayerListDetails = async (layerDetailsId) => {
   }
 };
 
-const LayerUpload = async (layerDetailsId, imageDetail) => {
-  var photo = {
-    uri: imageDetail.sourceURL.replace("content://", "file:///"),
-    type: imageDetail.mime,
-    name: imageDetail.filename,
-  };
+const LayerUpload = async (layerDetailsId, imageDetail, fileName) => {
+  // var photo = {
+  //   uri: imageDetail.sourceURL.replace("content://", "file://"),
+  //   type: imageDetail.mime,
+  //   name: imageDetail.filename,
+  // };
+  console.log("image",fileName)
   var formData = new FormData();
   formData.append('layerDtlsId', layerDetailsId);
-  formData.append('uploadDocs', photo);
+  formData.append('uploadDocs', imageDetail);
+  formData.append('fileName', fileName);
+
 
   const config = {
     headers: {
@@ -39,14 +42,7 @@ const LayerUpload = async (layerDetailsId, imageDetail) => {
   },
   };
 
-  Axios.post(Constants.LayerUploadAPI, formData, config).then(
-    response => {
-      console.log({ response });
-    },
-    error => {
-      console.log(JSON.stringify(error));
-    }
-  );
+  await Axios.post(Constants.LayerUploadAPI, formData, config)
   // const configHeader = {
   //   headers: { 'Content-Type': 'multipart/form-data; charset=utf-8; boundary="another cool boundary";' },
   // };

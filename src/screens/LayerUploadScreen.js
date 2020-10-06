@@ -13,7 +13,7 @@ import HeaderComponent from '../components/HeaderComponent';
 import ButtonComponent from '../components/ButtonComponent';
 import ImagePicker from 'react-native-image-picker';
 import LayerAPI from '../api/LayerAPI';
-import {Image} from 'react-native-elements';
+import {Image, ThemeConsumer} from 'react-native-elements';
 import * as APIConstants from '../constants/APIConstants';
 
 export default class LayerUploadScreen extends Component {
@@ -33,10 +33,15 @@ export default class LayerUploadScreen extends Component {
   }
 
   componentDidMount = async () => {
+    console.log("in mount");
     this.setState({
       layerName: this.props.route.params.layerName,
       gridId: this.props.route.params.gridId,
     });
+    this.getLayerImages();
+  };
+
+  getLayerImages = async () => {
     let LayerListDetails = await LayerAPI.GetLayerListDetails(
       this.props.route.params.layerDetailsId,
     );
@@ -51,7 +56,7 @@ export default class LayerUploadScreen extends Component {
       });
       this.setState({layerImages});
     }
-  };
+  }
 
   componentDidUpdate = async (prevProps) => {
     if (
@@ -76,27 +81,14 @@ export default class LayerUploadScreen extends Component {
 
   imagePickerHandler = (options) => {
     ImagePicker.showImagePicker(options, (response) => {
-      let imageDetail = {
-        sourceURL: response.uri,
-        mime: response.type,
-        filename: response.fileName,
-      };
-      let responseq = LayerAPI.LayerUpload(13, imageDetail);
-
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
-      } else if (response.customButton) {
-        console.log('User tapped custom button: ', response.customButton);
-      } else {
-        //console.log("Reponse Value : " + response.data.type);
-        // You can also display the image using data:
-        // const source = { uri: 'data:image/jpeg;base64,' + response.data };
-        // this.setState({
-        //   avatarSource: source,
-        // });
-      }
+      LayerAPI.LayerUpload(
+        this.props.route.params.layerDetailsId, 
+        response.data,
+        response.fileName
+      ).then(() => {
+        console.log("in then")
+        this.componentDidMount()
+      })
     });
   };
 
@@ -144,7 +136,7 @@ export default class LayerUploadScreen extends Component {
                   source={{uri: uri}}
                   style={{
                     resizeMode: 'cover',
-                    height: 100,
+                    height: 200,
                     width: Dimensions.get('window').width,
                     margin: 20,
                   }}
