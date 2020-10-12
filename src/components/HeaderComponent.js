@@ -1,10 +1,9 @@
 import React, {Component} from 'react';
-import {View, Text, Image} from 'react-native';
+import {View, Text, Image, TouchableOpacity} from 'react-native';
 import {DASHBOARD_LOGO} from '../assets/index';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import ComponentStyle from '../styles/ComponentStyle';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default class HeaderComponent extends Component {
   render() {
@@ -18,11 +17,11 @@ export default class HeaderComponent extends Component {
                 style={ComponentStyle.HeaderLogoStyle}></Image>
             ) : (
               <TouchableOpacity onPress={this.props.onBackButtonHandler}>
-              <MaterialIcon
-                name="arrow-back"
-                size={40}
-                style={ComponentStyle.HeaderLeftArrowStyle}
-              />
+                <MaterialIcon
+                  name="arrow-back"
+                  size={40}
+                  style={ComponentStyle.HeaderLeftArrowStyle}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -33,13 +32,15 @@ export default class HeaderComponent extends Component {
           </View>
           <View style={ComponentStyle.HeaderUserContainerStyle}>
             {this.props.IsDashboard === true ? (
-              <Icon
-                name="refresh"
-                size={30}
-                style={ComponentStyle.HeaderUserStyle}
-              />
-            ) : (
-              this.props.gridStatus == "InProgress" ? (<View>
+              <TouchableOpacity onPress={this.props.refreshHandler}>
+                  <MaterialIcon
+                    name="refresh"
+                    size={30}
+                    style={ComponentStyle.HeaderUserStyle}
+                  />
+              </TouchableOpacity>
+            ) : this.props.gridStatus == 'InProgress' ? (
+              <View>
                 <Text>In Progress</Text>
                 <View
                   style={{
@@ -56,7 +57,9 @@ export default class HeaderComponent extends Component {
                       backgroundColor: '#184589',
                     }}></View>
                 </View>
-              </View>) : this.props.gridStatus == "New" ? (<View>
+              </View>
+            ) : this.props.gridStatus == 'New' ? (
+              <View>
                 <Text>New</Text>
                 <View
                   style={{
@@ -65,10 +68,10 @@ export default class HeaderComponent extends Component {
                     borderWidth: 1,
                     borderColor: '#184589',
                     marginTop: 2,
-                  }}>
-                </View>
-              </View>) : 
-              this.props.gridStatus == "Completed" ? (<View>
+                  }}></View>
+              </View>
+            ) : this.props.gridStatus == 'Completed' ? (
+              <View>
                 <Text>Completed</Text>
                 <View
                   style={{
@@ -78,9 +81,10 @@ export default class HeaderComponent extends Component {
                     borderColor: '#184589',
                     backgroundColor: '#184589',
                     marginTop: 2,
-                  }}>
-                </View>
-              </View>) : (<View></View>)
+                  }}></View>
+              </View>
+            ) : (
+              <View></View>
             )}
           </View>
         </View>
