@@ -8,17 +8,20 @@ const GetGridList = async () => {
     let gridData = [];
     var i = 1;
     for (var item in data.lstGridDtls) {
-      let singleGrid = {
-        lat: data.lstGridDtls[item].marker_latitide,
-        lng: data.lstGridDtls[item].marker_longitude,
-        gridId: data.lstGridDtls[item].gridId,
-        gridNumber: data.lstGridDtls[item].gridno,
-        rectCords: getGridCordinates(data.lstGridDtls[item].gridGeoLocation),
-        status: data.lstGridDtls[item].status,
-        gridId: data.lstGridDtls[item].gridId,
-        gridFillColor: '#D2FFC7',
-      };
-      gridData.push(singleGrid);
+      // if(i <= 10)
+      // {
+        let singleGrid = {
+          lat: data.lstGridDtls[item].marker_latitide,
+          lng: data.lstGridDtls[item].marker_longitude,
+          gridId: data.lstGridDtls[item].gridId,
+          gridNumber: data.lstGridDtls[item].gridno,
+          rectCords: getGridCordinates(data.lstGridDtls[item].gridGeoLocation),
+          status: data.lstGridDtls[item].status,
+          gridId: data.lstGridDtls[item].gridId,
+          gridFillColor: 'rgba(151, 253, 0, 0.3)',
+        };
+        gridData.push(singleGrid);
+      // }
       i++;
     }
     dataForCenter = {
@@ -27,7 +30,6 @@ const GetGridList = async () => {
     };
     return {gridData, dataForCenter};
   } catch (err) {
-    console.log('Errr' + err);
     return null;
   }
 };
@@ -39,13 +41,11 @@ const GetGridListDropdown = async () => {
     data.unshift(initialValue);
     return data;
   } catch (err) {
-    console.log('Errr');
     return null;
   }
 };
 
 getGridCordinates = (gridLocations) => {
-  
   let locationDetails = [];
   for (var item in gridLocations) {
     let locationDetail = {
@@ -70,7 +70,6 @@ const GetGridListDetailsById = async (id) => {
     );
     return data;
   } catch (err) {
-    console.log('Errr' + JSON.stringify(err.response));
     return err;
   }
 };

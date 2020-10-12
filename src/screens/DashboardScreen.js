@@ -4,25 +4,34 @@ import {
   TouchableOpacity,
   PermissionsAndroid,
   StyleSheet,
+  Animated,
+  AsyncStorage,
   Text,
 } from 'react-native';
 import StatusBarComponent from '../components/StatusBarComponent';
 import HeaderComponent from '../components/HeaderComponent';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
-import MapView, {PROVIDER_GOOGLE, Marker, Polygon} from 'react-native-maps';
+import MapView, {
+  PROVIDER_GOOGLE,
+  Marker,
+  Polygon,
+  AnimatedRegion,
+} from 'react-native-maps';
 import GeoFencing from 'react-native-geo-fencing';
 import Geolocation from '@react-native-community/geolocation';
 import GridAPI from '../api/GridAPI';
 import AutoCompleteComponent from '../components/AutoCompleteComponent';
-import gridData from '../gridData';
-
+import LoaderComponent from '../components/LoaderComponent';
+import {setRespInterceptor, setAuthHeader} from '../utils/auth';
+setAuthHeader();
+setRespInterceptor();
 export default class DashBoardScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
       GridNumber: '',
-      IsLoaded: false,
+      isLoading: false,
       initialRegion: {
         latitude: 10.391000434756279,
         longitude: 77.97916952213156,
@@ -41,10 +50,21 @@ export default class DashBoardScreen extends Component {
   }
 
   componentDidMount = async () => {
+    this.setState({isLoading: true});
+    if ((await AsyncStorage.getItem('accessToken')) === null) {
+      this.setState({isLoading: false});
+      this.props.navigation.navigate('Login');
+    } else {
+      await this.onPageLoad();
+    }
+  };
+
+  onPageLoad = async () => {
     let access = await this.accessPermission();
     if (access) {
-      this.getGridData();
-      this.getGridDropdown();
+      await this.getGridData();
+      await this.getGridDropdown();
+      this.setState({isLoading: false});
     }
   };
 
@@ -145,7 +165,6 @@ export default class DashBoardScreen extends Component {
         return false;
       }
     } catch (err) {
-      console.warn(err);
       return false;
     }
   };
@@ -158,23 +177,21 @@ export default class DashBoardScreen extends Component {
 
     GeoFencing.containsLocation(pointDetail, polygon)
       .then(() => {
-        console.log("Hitted" + title);
         this.setState({
-          currentGridDetails: title !== undefined ? 'Currently in the grid : ' + title : "",
+          currentGridDetails:
+            title !== undefined ? 'Currently in the grid : ' + title : '',
         });
         return;
       })
-      .catch(() => {
-       
-      });
+      .catch(() => {});
   };
 
   polygonHandler = (markerDetails) => {
-    console.log(markerDetails);
+    // console.log(markerDetails);
   };
 
   getDeltas = (lat, lng, distance = 5) => {
-    const oneDegreeOfLatitudeInMeters = 111.32 * 50;
+    const oneDegreeOfLatitudeInMeters = 90.32 * 25;
 
     const latitudeDelta = distance / oneDegreeOfLatitudeInMeters;
     const longitudeDelta =
@@ -190,7 +207,6 @@ export default class DashBoardScreen extends Component {
   };
 
   ClearWatch = () => {
-    console.log('Clear Watch ' + this.state.watchId);
     Geolocation.clearWatch(this.state.watchId);
   };
 
@@ -201,10 +217,10 @@ export default class DashBoardScreen extends Component {
 
       for (let item in gridData) {
         if (gridData[item].gridId === this.state.gridId) {
-          gridData[item].gridFillColor = '#2ABA06';
+          gridData[item].gridFillColor = 'rgba(0, 230, 64, 0.5)';
           centerRegion = this.getDeltas(gridData[item].lat, gridData[item].lng);
         } else {
-          gridData[item].gridFillColor = '#D2FFC7';
+          gridData[item].gridFillColor = 'rgba(151, 253, 0, 0.3)';
         }
       }
       this.setState({gridData});
@@ -229,14 +245,13 @@ export default class DashBoardScreen extends Component {
         await Geolocation.getCurrentPosition(
           (position) => {
             initialPosition = JSON.stringify(position);
-            console.log(initialPosition);
             this.setState({
               initialRegion: {
                 longitude: position.coords.longitude,
                 latitude: position.coords.latitude,
                 latitudeDelta: 0.001,
                 longitudeDelta: 0.001,
-              }
+              },
             });
             this.state.gridData.map((polygon) => {
               let polygonDetail = [];
@@ -247,8 +262,11 @@ export default class DashBoardScreen extends Component {
                 };
                 polygonDetail.push(polypot);
               });
-              console.log("Position Details : " + JSON.stringify(position))
-              this.geoLocationHandler(position, polygonDetail, polygon.gridNumber);
+              this.geoLocationHandler(
+                position,
+                polygonDetail,
+                polygon.gridNumber,
+              );
             });
             if (this.state.isCurrentLocationHandled) {
               let watchId = Geolocation.watchPosition(
@@ -263,8 +281,12 @@ export default class DashBoardScreen extends Component {
                       };
                       polygonDetail.push(polypot);
                     });
-    
-                    this.geoLocationHandler(position, polygonDetail, polygon.gridNumber);
+
+                    this.geoLocationHandler(
+                      position,
+                      polygonDetail,
+                      polygon.gridNumber,
+                    );
                   });
                 },
                 (err) => {
@@ -294,155 +316,190 @@ export default class DashBoardScreen extends Component {
     }
   };
 
+  onRefreshHandler = async () => {
+    
+    if ((await AsyncStorage.getItem('accessToken')) === null) {
+      this.props.navigation.navigate('Login');
+    } else await this.onPageLoad();
+  };
+
+  onMapReadyHandler = () => {
+    //console.log('Hitted On Map ready Handler ');
+  };
+
   render() {
     return (
-      <View style={{flex: 3, backgroundColor: '#FFFFFF'}}>
-        <StatusBarComponent IsVisible={false}></StatusBarComponent>
-        <HeaderComponent
-          headingValue="Dashboard"
-          IsDashboard={true}></HeaderComponent>
-        <View style={{flex: 4, flexDirection: 'row', height: 70, marginTop: 5}}>
-          <View
-            style={{
-              flex: 5,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              padding: 15,
-            }}>
-            <View style={{flex: 4, marginTop: 5}}>
-              {Object.keys(this.state.gridDetailsDropdown).length > 0 ? (
-                <AutoCompleteComponent
-                  WhereFromValue="Dashboard"
-                  items={this.state.gridDetailsDropdown}
-                  onChangeItemHandler={(item) => {
-                    this.onChangeItemHandler(item);
-                  }}></AutoCompleteComponent>
-              ) : (
-                <Text></Text>
-              )}
-            </View>
-            <TouchableOpacity
-              style={{flex: 0.7}}
-              onPress={() => this.getSearchGrid()}>
-              <Icon
-                name="search"
-                color="#FFFFFF"
-                size={25}
+      <>
+        {this.state.isLoading ? (
+          <LoaderComponent></LoaderComponent>
+        ) : (
+          <Animated.View style={{flex: 3, backgroundColor: '#FFFFFF'}}>
+            <StatusBarComponent IsVisible={false}></StatusBarComponent>
+            <HeaderComponent
+              headingValue="Dashboard"
+              IsDashboard={true}
+              refreshHandler={() => this.onRefreshHandler()}></HeaderComponent>
+            <Animated.View
+              style={{flex: 4, flexDirection: 'row', height: 70, marginTop: 5}}>
+              <Animated.View
                 style={{
-                  padding: 12,
-                  backgroundColor: '#184589',
-                  marginTop: 5,
-                  alignSelf: 'center',
-                  borderRadius: 3,
-                }}></Icon>
-            </TouchableOpacity>
-          </View>
-          <View style={{flex: 1}}>
-            <View style={{marginTop: 17}}>
-              <TouchableOpacity
-                onPress={() => {
-                  this.locationHandler();
+                  flex: 5,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  padding: 15,
                 }}>
-                <MaterialIcon
-                  name="my-location"
-                  size={35}
-                  style={{padding: 5}}
-                  color={this.state.isCurrentLocationHandled ? "green" : "red"}></MaterialIcon>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-        {this.state.isCurrentLocationHandled ? <View>
-          <Text style={styles.blinkTwoStyle}>
-            {this.state.currentGridDetails}
-          </Text>
-        </View> : <View></View>}
-        <View
-          style={{
-            flex: 28,
-            backgroundColor: 'red',
-            margin: 15,
-          }}>
-          <>
-            {Object.keys(this.state.initialRegion).length > 0 ? (
-              <>
-                <MapView
-                  region={this.state.initialRegion}
-                  style={styles.mapView}
-                  provider={PROVIDER_GOOGLE}>
-                  {this.state.currLoc !== null && (
-                    <Marker
-                      key={'test'}
-                      coordinate={{
-                        latitude: this.state.currLoc.coords.latitude,
-                        longitude: this.state.currLoc.coords.longitude,
-                      }}
-                      title={'My Location'}
-                      description={'Location Test'}
-                      draggable={true}>
-                      <MaterialIcon
-                        name="location-pin"
-                        size={50}
-                        color="green"
-                      />
-                    </Marker>
+                <Animated.View style={{flex: 4, marginTop: 5}}>
+                  {Object.keys(this.state.gridDetailsDropdown).length > 0 ? (
+                    <AutoCompleteComponent
+                      WhereFromValue="Dashboard"
+                      items={this.state.gridDetailsDropdown}
+                      onChangeItemHandler={(item) => {
+                        this.onChangeItemHandler(item);
+                      }}></AutoCompleteComponent>
+                  ) : (
+                    <Text></Text>
                   )}
-                  {this.state.gridData.length > 0 &&
-                    this.state.gridData.map((marker) => {
-                      return (
-                        <>
-                          <Polygon
-                            key={'grid' + marker.lng}
-                            coordinates={marker.rectCords}
-                            strokeColor="#135801"
-                            strokeWidth={2}
-                            fillColor={marker.gridFillColor}
-                            onPress={() => {
-                              this.polygonHandler(marker);
-                            }}
-                            tappable={true}
-                          />
-                          <Marker
-                            key={'marker' + marker.lat}
-                            coordinate={{
-                              latitude: marker.lat,
-                              longitude: marker.lng,
-                            }}
-                            onPress={() => {
-                              this.props.navigation.navigate('GridView', {
-                                gridId: marker.gridId,
-                              });
-                            }}>
-                            <Text
-                              style={{
-                                fontSize: 10,
-                                fontFamily: 'Archivo-Regular',
-                              }}>
-                              {marker.gridNumber}
-                            </Text>
-                            <MaterialIcon
-                              name="location-pin"
-                              size={35}
-                              color={
-                                marker.status === 'Completed'
-                                  ? '#46FE18'
-                                  : marker.status === 'InProgress'
-                                  ? '#FEF74D'
-                                  : '#FFA620'
-                              }
-                            />
-                          </Marker>
-                        </>
-                      );
-                    })}
-                </MapView>
-              </>
+                </Animated.View>
+                <TouchableOpacity
+                  style={{flex: 0.7}}
+                  onPress={() => this.getSearchGrid()}>
+                  <Icon
+                    name="search"
+                    color="#FFFFFF"
+                    size={25}
+                    style={{
+                      padding: 12,
+                      backgroundColor: '#184589',
+                      marginTop: 5,
+                      alignSelf: 'center',
+                      borderRadius: 3,
+                    }}></Icon>
+                </TouchableOpacity>
+              </Animated.View>
+              <Animated.View style={{flex: 1}}>
+                <Animated.View style={{marginTop: 17}}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      // this.locationHandler();
+                      this.onRefreshHandler();
+                    }}>
+                    <MaterialIcon
+                      name="my-location"
+                      size={35}
+                      style={{padding: 5}}
+                      color={
+                        this.state.isCurrentLocationHandled ? 'green' : 'red'
+                      }></MaterialIcon>
+                  </TouchableOpacity>
+                </Animated.View>
+              </Animated.View>
+            </Animated.View>
+            {this.state.isCurrentLocationHandled ? (
+              <Animated.View>
+                <Text style={styles.blinkTwoStyle}>
+                  {this.state.currentGridDetails}
+                </Text>
+              </Animated.View>
             ) : (
-              <Text>No Render</Text>
+              <Animated.View></Animated.View>
             )}
-          </>
-        </View>
-      </View>
+            <Animated.View
+              style={{
+                flex: 28,
+                backgroundColor: 'white',
+                margin: 15,
+              }}>
+              <>
+                {Object.keys(this.state.initialRegion).length > 0 ? (
+                  <>
+                    <MapView
+                      region={this.state.initialRegion}
+                      onMapReady={this.onMapReadyHandler}
+                      style={styles.mapView}
+                      provider={PROVIDER_GOOGLE}>
+                      {this.state.currLoc !== null && (
+                        <Marker
+                          key={'test'}
+                          coordinate={{
+                            latitude: this.state.currLoc.coords.latitude,
+                            longitude: this.state.currLoc.coords.longitude,
+                          }}
+                          title={'My Location'}
+                          description={'Location Test'}
+                          draggable={true}>
+                          <MaterialIcon
+                            name="location-pin"
+                            size={50}
+                            color="green"
+                          />
+                        </Marker>
+                      )}
+                      {this.state.gridData.length > 0 &&
+                        this.state.gridData.map((marker) => {
+                          return (
+                            <>
+                              <Marker
+                                key={'marker' + marker.lat}
+                                tracksViewChanges={false}
+                                coordinate={{
+                                  latitude: marker.lat,
+                                  longitude: marker.lng,
+                                }}
+                                onPress={() => {
+                                  this.props.navigation.navigate('GridView', {
+                                    gridId: marker.gridId,
+                                  });
+                                }}>
+                                <Text
+                                  style={{
+                                    fontSize: 10,
+                                    fontFamily: 'Archivo-Regular',
+                                  }}>
+                                  {marker.gridNumber}
+                                </Text>
+                                <MaterialIcon
+                                  name="location-pin"
+                                  size={35}
+                                  color={
+                                    marker.status === 'Completed'
+                                      ? '#46FE18'
+                                      : marker.status === 'InProgress'
+                                      ? '#FEF74D'
+                                      : '#FFA620'
+                                  }
+                                />
+                              </Marker>
+                            </>
+                          );
+                        })}
+                      {this.state.gridData.length > 0 &&
+                        this.state.gridData.map((marker) => {
+                          return (
+                            <>
+                              <Polygon
+                                key={'grid' + marker.lng}
+                                coordinates={marker.rectCords}
+                                strokeColor="#135801"
+                                strokeWidth={1}
+                                fillColor={marker.gridFillColor}
+                                onPress={() => {
+                                  this.polygonHandler(marker);
+                                }}
+                                tappable={true}
+                              />
+                            </>
+                          );
+                        })}
+                    </MapView>
+                  </>
+                ) : (
+                  <Text>No Render</Text>
+                )}
+              </>
+            </Animated.View>
+          </Animated.View>
+        )}
+      </>
     );
   }
 }
