@@ -23,7 +23,7 @@ import Geolocation from '@react-native-community/geolocation';
 import GridAPI from '../api/GridAPI';
 import AutoCompleteComponent from '../components/AutoCompleteComponent';
 import LoaderComponent from '../components/LoaderComponent';
-import {setRespInterceptor, setAuthHeader} from '../utils/auth';
+import {setRespInterceptor, setAuthHeader, isUserLoggedIn} from '../utils/auth';
 setAuthHeader();
 setRespInterceptor();
 export default class DashBoardScreen extends Component {
@@ -51,11 +51,12 @@ export default class DashBoardScreen extends Component {
 
   componentDidMount = async () => {
     this.setState({isLoading: true});
-    if ((await AsyncStorage.getItem('accessToken')) === null) {
+    if(!isUserLoggedIn()){
       this.setState({isLoading: false});
       this.props.navigation.navigate('Login');
     } else {
       await this.onPageLoad();
+      this.setState({isLoading: false});
     }
   };
 
@@ -380,8 +381,8 @@ export default class DashBoardScreen extends Component {
                 <Animated.View style={{marginTop: 17}}>
                   <TouchableOpacity
                     onPress={() => {
-                      // this.locationHandler();
-                      this.onRefreshHandler();
+                     this.locationHandler();
+                      //this.onRefreshHandler();
                     }}>
                     <MaterialIcon
                       name="my-location"

@@ -39,10 +39,10 @@ export default class GridViewScreen extends Component {
       isLoading: false,
     };
   }
-
+  
   componentDidMount = async () => {
     this.setState({isLoading: true});
-    if ((await AsyncStorage.getItem('accessToken')) === null) {
+    if (!isUserLoggedIn()) {
       this.setState({isLoading: false});
       this.props.navigation.navigate('Login');
     } else {
@@ -119,7 +119,7 @@ export default class GridViewScreen extends Component {
       this.props.route.params.gridId.toString() !==
       prevProps.route.params.gridId.toString()
     ) {
-      if ((await AsyncStorage.getItem('accessToken')) === null) {
+      if ((await AsyncStorage.getItem('IsSessionExpired')) === true) {
         this.props.navigation.navigate('Login');
       } else {
         this.onPageLoad();

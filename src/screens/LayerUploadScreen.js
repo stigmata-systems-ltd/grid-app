@@ -39,7 +39,7 @@ export default class LayerUploadScreen extends Component {
 
   componentDidMount = async () => {
     this.setState({isLoading: true});
-    if ((await AsyncStorage.getItem('accessToken')) === null) {
+    if ((await AsyncStorage.getItem('IsSessionExpired')) === true) {
       this.setState({isLoading: false});
       this.props.navigation.navigate('Login');
     } else {
@@ -79,7 +79,7 @@ export default class LayerUploadScreen extends Component {
       this.props.route.params.layerDetailsId.toString() !==
       prevProps.route.params.layerDetailsId.toString()
     ) {
-      if (!isUserLoggedIn()) {
+      if ((await AsyncStorage.getItem('IsSessionExpired')) === true) {
         this.props.navigation.navigate('Login');
       } else {
         this.onPageLoad();
