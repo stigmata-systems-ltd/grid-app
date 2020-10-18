@@ -17,10 +17,8 @@ import LayerCountComponent from '../components/LayerCountComponent';
 import ViewComponent from '../components/ViewComponent';
 import * as GridViewConstant from '../constants/GridViewConstants';
 import LoaderComponent from '../components/LoaderComponent';
-import {isUserLoggedIn} from '../utils/auth';
-import {setRespInterceptor, setAuthHeader} from '../utils/auth';
-setAuthHeader();
-setRespInterceptor();
+import Middleware from '../api/Middleware';
+
 export default class GridViewScreen extends Component {
   constructor(props) {
     super(props);
@@ -39,10 +37,10 @@ export default class GridViewScreen extends Component {
       isLoading: false,
     };
   }
-  
+
   componentDidMount = async () => {
     this.setState({isLoading: true});
-    if (!isUserLoggedIn()) {
+    if (!Middleware.IsUserLoggedIn()) {
       this.setState({isLoading: false});
       this.props.navigation.navigate('Login');
     } else {
@@ -52,65 +50,86 @@ export default class GridViewScreen extends Component {
   };
 
   onPageLoad = async () => {
+    
     this.setState({gridId: this.props.route.params.gridId, isLoading: true});
-    let gridDataBasedOnId = await GridAPI.GetGridListDetailsById(
-      this.props.route.params.gridId,
-    );
-    let layerDetailsOriginal = await LayerAPI.GetLayerDetails();
-    let layerDetails = [];
-    if (layerDetailsOriginal !== undefined && layerDetailsOriginal !== null) {
-      for (var item in layerDetailsOriginal) {
-        let grid = null;
-        grid = gridDataBasedOnId.lyrDtls.filter((g) => {
-          return g.layerId === layerDetailsOriginal[item].id;
-        });
-        if (Object.keys(grid).length > 0) {
-          let layer = {
-            label: layerDetailsOriginal[item].layerName,
-            value: layerDetailsOriginal[item].id,
-          };
-          layerDetails.push(layer);
-        }
-      }
-    }
-    if (gridDataBasedOnId != null && gridDataBasedOnId != undefined) {
-      let layerCountDetails = gridDataBasedOnId.lyrDtls.filter((item) => {
-        return item.status === 'InProgress';
-      });
-
-      this.setState(
-        {
-          gridDetail: gridDataBasedOnId,
-          layerDetails: layerDetails,
-          layerId: layerDetails.length > 0 ? layerDetails[0].value : '',
-          layerDetailsId:
-            layerDetails.length > 0 ? layerDetails[0].layerDtlsId : '',
-          currentLayerDetail: gridDataBasedOnId.lyrDtls[0],
-          layerCount: layerCountDetails.length,
-          isHavingLayer: layerDetails.length > 0 ? true : false,
-        },
-        () => {
-          let layerDetailss = this.state.gridDetail.lyrDtls.filter((layer) => {
-            return layer.layerId === this.state.layerDetails[0].value;
-          });
-          if (
-            layerDetails !== null &&
-            layerDetails !== undefined &&
-            layerDetails.length > 0
-          ) {
-            this.setState(
-              {
-                layerId: this.state.layerDetails[0].value,
-                layerName: this.state.layerDetails[0].label,
-                layerDetailsId: layerDetailss[0].layerDtlsId,
-              },
-              () => {
-                this.setState({isLoading: false});
-              },
-            );
+    let {
+      gridDataBasedOnId,
+      isSessionExpired,
+      isRefreshed,
+    } = await GridAPI.GetGridListDetailsById(this.props.route.params.gridId);
+    if (!isRefreshed) {
+      if (!isSessionExpired) {
+        let {
+          layerDetailsOriginal,
+          isSessionExpireds,
+        } = await LayerAPI.GetLayerDetails();
+        let layerDetails = [];
+        if (
+          layerDetailsOriginal !== undefined &&
+          layerDetailsOriginal !== null
+        ) {
+          for (var item in layerDetailsOriginal) {
+            let grid = null;
+            grid = gridDataBasedOnId.lyrDtls.filter((g) => {
+              return g.layerId === layerDetailsOriginal[item].id;
+            });
+            if (Object.keys(grid).length > 0) {
+              let layer = {
+                label: layerDetailsOriginal[item].layerName,
+                value: layerDetailsOriginal[item].id,
+              };
+              layerDetails.push(layer);
+            }
           }
-        },
-      );
+        }
+        if (gridDataBasedOnId != null && gridDataBasedOnId != undefined) {
+          let layerCountDetails = gridDataBasedOnId.lyrDtls.filter((item) => {
+            return item.status === 'InProgress';
+          });
+
+          this.setState(
+            {
+              gridDetail: gridDataBasedOnId,
+              layerDetails: layerDetails,
+              layerId: layerDetails.length > 0 ? layerDetails[0].value : '',
+              layerDetailsId:
+                layerDetails.length > 0 ? layerDetails[0].layerDtlsId : '',
+              currentLayerDetail: gridDataBasedOnId.lyrDtls[0],
+              layerCount: layerCountDetails.length,
+              isHavingLayer: layerDetails.length > 0 ? true : false,
+            },
+            () => {
+              let layerDetailss = this.state.gridDetail.lyrDtls.filter(
+                (layer) => {
+                  return layer.layerId === this.state.layerDetails[0].value;
+                },
+              );
+              if (
+                layerDetails !== null &&
+                layerDetails !== undefined &&
+                layerDetails.length > 0
+              ) {
+                this.setState(
+                  {
+                    layerId: this.state.layerDetails[0].value,
+                    layerName: this.state.layerDetails[0].label,
+                    layerDetailsId: layerDetailss[0].layerDtlsId,
+                  },
+                  () => {
+                    this.setState({isLoading: false});
+                  },
+                );
+              }
+            },
+          );
+        }
+      } else {
+        this.setState({isLoading: false});
+        await Middleware.clearSession();
+        this.props.navigation.navigate('Login');
+      }
+    } else {
+      this.onPageLoad();
     }
   };
 
@@ -119,10 +138,13 @@ export default class GridViewScreen extends Component {
       this.props.route.params.gridId.toString() !==
       prevProps.route.params.gridId.toString()
     ) {
-      if ((await AsyncStorage.getItem('IsSessionExpired')) === true) {
+      this.setState({isLoading: true});
+      if (!Middleware.IsUserLoggedIn()) {
+        this.setState({isLoading: false});
         this.props.navigation.navigate('Login');
       } else {
-        this.onPageLoad();
+        await this.onPageLoad();
+        this.setState({isLoading: false});
       }
     }
   };

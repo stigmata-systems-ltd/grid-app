@@ -12,7 +12,6 @@ const LoginValidation = async (userDetails) => {
     await setAuthTokens(res.data);
     return JSON.parse('{"message":"' + res.data + '", "isValidated":true}');
   } catch (err) {
-    console.log(err);
     return JSON.parse(
       '{"message":"' + err.response.data.message + '", "isValidated":false}',
     );

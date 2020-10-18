@@ -11,12 +11,12 @@ export const isUserLoggedIn = async () => {
 };
 
 export const setAuthTokens = async (userDetails) => {
-  console.log("Hitted");
+  console.log("Hitted : " + userDetails.token);
   await AsyncStorage.setItem('userDetails', JSON.stringify(userDetails));
-  await AsyncStorage.setItem('accessToken', JSON.stringify(userDetails.token));
+  await AsyncStorage.setItem('accessToken', userDetails.token);
   await AsyncStorage.setItem(
     'refreshToken',
-    JSON.stringify(userDetails.refreshToken),
+    userDetails.refreshToken
   );
   await AsyncStorage.setItem('IsSessionExpired', '0');
   
@@ -28,6 +28,7 @@ export const logout = async ({history}) => {
   history.push('/');
 };
 export const setNewTokens = async (access, refresh) => {
+  console.log(access);
   await AsyncStorage.setItem('accessToken', JSON.stringify(access));
   await AsyncStorage.setItem('refreshToken', JSON.stringify(refresh));
 };
@@ -75,7 +76,7 @@ export const setRespInterceptor =  () => {
             // 3) return originalRequest object with Axios.
             return axios(originalRequest);
           })
-          .catch(async (err) => {
+          .catch((err) => {
             AsyncStorage.removeItem('userDetails');
             AsyncStorage.removeItem('accessToken');
             AsyncStorage.removeItem('refreshToken');

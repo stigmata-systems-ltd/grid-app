@@ -23,9 +23,8 @@ import Geolocation from '@react-native-community/geolocation';
 import GridAPI from '../api/GridAPI';
 import AutoCompleteComponent from '../components/AutoCompleteComponent';
 import LoaderComponent from '../components/LoaderComponent';
-import {setRespInterceptor, setAuthHeader, isUserLoggedIn} from '../utils/auth';
-setAuthHeader();
-setRespInterceptor();
+import Middleware from '../api/Middleware';
+
 export default class DashBoardScreen extends Component {
   constructor(props) {
     super(props);
@@ -51,7 +50,7 @@ export default class DashBoardScreen extends Component {
 
   componentDidMount = async () => {
     this.setState({isLoading: true});
-    if(!isUserLoggedIn()){
+    if (!Middleware.IsUserLoggedIn()) {
       this.setState({isLoading: false});
       this.props.navigation.navigate('Login');
     } else {
@@ -61,31 +60,50 @@ export default class DashBoardScreen extends Component {
   };
 
   onPageLoad = async () => {
+    
     let access = await this.accessPermission();
+    console.log("Hitted");
     if (access) {
-      await this.getGridData();
+      console.log("Hitted Access");
       await this.getGridDropdown();
-      this.setState({isLoading: false});
+      console.log("Hitted");
+      await this.getGridData();
     }
   };
 
   getGridDropdown = async () => {
-    let gridDetailsForDropdown = await GridAPI.GetGridListDropdown();
+    console.log("Hitted");
+    let {
+      data,
+      isSessionExpired,
+      isRefreshed,
+    } = await GridAPI.GetGridListDropdown();
+    
     let gridDetailsDropdown = [];
-    if (
-      gridDetailsForDropdown !== null &&
-      gridDetailsForDropdown !== undefined &&
-      Object.keys(gridDetailsForDropdown).length > 0
-    ) {
-      for (let item in gridDetailsForDropdown) {
-        let gridDataItem = {
-          label: gridDetailsForDropdown[item].gridName,
-          value: gridDetailsForDropdown[item].id,
-        };
-        gridDetailsDropdown.push(gridDataItem);
+    if (!isRefreshed) {
+      if (!isSessionExpired) {
+        if (
+          data !== null &&
+          data !== undefined &&
+          Object.keys(data).length > 0
+        ) {
+          for (let item in data) {
+            let gridDataItem = {
+              label: data[item].gridName,
+              value: data[item].id,
+            };
+            gridDetailsDropdown.push(gridDataItem);
+          }
+          this.setState({gridDetailsDropdown});
+          this.setState({gridId: gridDetailsDropdown[0].value});
+        }
+      } else {
+        this.setState({isLoading: false});
+        await Middleware.clearSession();
+        this.props.navigation.navigate('Login');
       }
-      this.setState({gridDetailsDropdown});
-      this.setState({gridId: gridDetailsDropdown[0].value});
+    } else {
+      this.onPageLoad();
     }
   };
 
@@ -109,28 +127,52 @@ export default class DashBoardScreen extends Component {
   };
 
   getGridData = async () => {
-    let {gridData, dataForCenter} = await GridAPI.GetGridList();
-    if (gridData !== null) {
-      let initialRegion = this.getDeltas(18.9651515, 72.8002582142857);
-      this.setState({initialRegion: initialRegion});
-      this.setState({gridData: gridData, dataForCenter: dataForCenter});
-      gridData.map((polygon) => {
-        let polygonDetail = [];
-        polygon.rectCords.map((pot) => {
-          let polypot = {
-            lat: pot.latitude,
-            lng: pot.longitude,
-          };
-          polygonDetail.push(polypot);
-        });
-        let position = {};
-        let coords = {
-          latitude: gridData[0].lat,
-          longitude: gridData[0].lng,
-        };
-        position.coords = coords;
-        this.geoLocationHandler(position, polygonDetail, polygon.gridNumber);
-      });
+    
+    let {
+      gridData,
+      dataForCenter,
+      isSessionExpired,
+      isRefreshed,
+    } = await GridAPI.GetGridList();
+    
+    if (!isRefreshed) {
+      if (!isSessionExpired) {
+        if (gridData !== null && gridData !== undefined) {
+          let initialRegion = this.getDeltas(18.9651515, 72.8002582142857);
+          this.setState({initialRegion: initialRegion});
+          this.setState({gridData: gridData, dataForCenter: dataForCenter});
+          gridData.map((polygon) => {
+            let polygonDetail = [];
+            polygon.rectCords.map((pot) => {
+              let polypot = {
+                lat: pot.latitude,
+                lng: pot.longitude,
+              };
+              polygonDetail.push(polypot);
+            });
+            let position = {};
+            let coords = {
+              latitude: gridData[0].lat,
+              longitude: gridData[0].lng,
+            };
+            position.coords = coords;
+            this.geoLocationHandler(
+              position,
+              polygonDetail,
+              polygon.gridNumber,
+            );
+          });
+          this.setState({isLoading: false});
+        } else {
+          this.setState({isLoading: false});
+        }
+      } else {
+        this.setState({isLoading: false});
+        await Middleware.clearSession();
+        this.props.navigation.navigate('Login');
+      }
+    } else {
+      this.onPageLoad();
     }
   };
 
@@ -318,7 +360,6 @@ export default class DashBoardScreen extends Component {
   };
 
   onRefreshHandler = async () => {
-    
     if ((await AsyncStorage.getItem('accessToken')) === null) {
       this.props.navigation.navigate('Login');
     } else await this.onPageLoad();
@@ -381,7 +422,7 @@ export default class DashBoardScreen extends Component {
                 <Animated.View style={{marginTop: 17}}>
                   <TouchableOpacity
                     onPress={() => {
-                     this.locationHandler();
+                      this.locationHandler();
                       //this.onRefreshHandler();
                     }}>
                     <MaterialIcon
@@ -425,8 +466,6 @@ export default class DashBoardScreen extends Component {
                             latitude: this.state.currLoc.coords.latitude,
                             longitude: this.state.currLoc.coords.longitude,
                           }}
-                          title={'My Location'}
-                          description={'Location Test'}
                           draggable={true}>
                           <MaterialIcon
                             name="location-pin"
@@ -458,7 +497,7 @@ export default class DashBoardScreen extends Component {
                                   }}>
                                   {marker.gridNumber}
                                 </Text>
-                                <MaterialIcon
+                                {/* <MaterialIcon
                                   name="location-pin"
                                   size={35}
                                   color={
@@ -468,7 +507,7 @@ export default class DashBoardScreen extends Component {
                                       ? '#FEF74D'
                                       : '#FFA620'
                                   }
-                                />
+                                /> */}
                               </Marker>
                             </>
                           );
@@ -484,7 +523,9 @@ export default class DashBoardScreen extends Component {
                                 strokeWidth={1}
                                 fillColor={marker.gridFillColor}
                                 onPress={() => {
-                                  this.polygonHandler(marker);
+                                  this.props.navigation.navigate('GridView', {
+                                    gridId: marker.gridId,
+                                  });
                                 }}
                                 tappable={true}
                               />
