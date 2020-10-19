@@ -35,7 +35,6 @@ const GetLayerListDetails = async (layerDetailsId) => {
   let isSessionExpired = false;
   let isRefreshed = false;
   try {
-    console.log(layerDetailsId);
     const {data} = await Axios.get(
       Constants.LayerListAPI + '?layerDtlsId=' + layerDetailsId,
       {

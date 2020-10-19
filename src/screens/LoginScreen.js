@@ -10,24 +10,30 @@ import CheckBoxComponent from '../components/CheckBoxComponent';
 import * as LoginConstant from '../constants/LoginConstant';
 import LoginAPI from '../api/LoginAPI';
 import {decode as atob, encode as btoa} from 'base-64';
-import  {isUserLoggedIn} from '../utils/auth';
- 
+import {isUserLoggedIn} from '../utils/auth';
+import {AsyncStorage} from 'react-native';
+
 export default class LoginScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      Username: 'admin',
-      Password: 'admin',
+      Username: '',
+      Password: '',
       RememberMe: false,
       IsLoaded: false,
     };
   }
 
-  componentDidMount = async () =>{
-    if(await isUserLoggedIn()){
+  componentDidMount = async () => {
+    if (await isUserLoggedIn()) {
       this.props.navigation.navigate('Dashboard');
+    } else {
+      let rememberUserName = await AsyncStorage.getItem('RememberUserName');
+      let rememberPassword = await AsyncStorage.getItem('RememberPassword');
+      if (rememberUserName !== null || rememberUserName !== undefined)
+        this.setState({Username: rememberUserName, Password: rememberPassword});
     }
-  }
+  };
 
   showToast = (errorMessage) => {
     ToastAndroid.showWithGravity(
@@ -45,12 +51,17 @@ export default class LoginScreen extends Component {
       this.showToast(LoginConstant.PASSWORD_IS_MANDATORY);
       return;
     } else {
-      this.setState({IsLoaded: true})
+      this.setState({IsLoaded: true});
       let userDetails = {
         Username: this.state.Username,
         Password: btoa(this.state.Password),
       };
-      
+      if (this.state.RememberMe) {
+        await AsyncStorage.removeItem('RememberUserName');
+        await AsyncStorage.removeItem('RememberPassword');
+        await AsyncStorage.setItem('RememberUserName', this.state.Username);
+        await AsyncStorage.setItem('RememberPassword', this.state.Password);
+      }
       let result = await LoginAPI.LoginValidation(userDetails);
       if (!result.isValidated) {
         this.showToast(result.message);

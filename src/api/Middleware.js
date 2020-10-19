@@ -7,12 +7,10 @@ const GetAccessToken = async () => {
 };
 
 const GetRefreshToken = async () => {
-  console.log('Hitted Refresh Token');
   let values = await AsyncStorage.getItem('refreshToken');
   const refreshToken = values;
   try {
     let res = await axios.post(Constants.AuthRefreshAPI, {token: refreshToken});
-    console.log(res.data);
     if (res.data !== undefined && res.data !== null && res.data.isAPIValid) {
       await AsyncStorage.removeItem('accessToken');
       await AsyncStorage.removeItem('refreshToken');
@@ -23,7 +21,6 @@ const GetRefreshToken = async () => {
       return JSON.parse('{"isSessionExpired" : true}');
     }
   } catch (err) {
-    console.log(err);
     return JSON.parse('{"isSessionExpired" : true}');
   }
 };

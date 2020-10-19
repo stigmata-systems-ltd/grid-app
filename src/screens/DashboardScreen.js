@@ -62,17 +62,13 @@ export default class DashBoardScreen extends Component {
   onPageLoad = async () => {
     
     let access = await this.accessPermission();
-    console.log("Hitted");
     if (access) {
-      console.log("Hitted Access");
       await this.getGridDropdown();
-      console.log("Hitted");
       await this.getGridData();
     }
   };
 
   getGridDropdown = async () => {
-    console.log("Hitted");
     let {
       data,
       isSessionExpired,
@@ -260,10 +256,16 @@ export default class DashBoardScreen extends Component {
 
       for (let item in gridData) {
         if (gridData[item].gridId === this.state.gridId) {
-          gridData[item].gridFillColor = 'rgba(0, 230, 64, 0.5)';
+          gridData[item].gridFillColor = 'rgba(0, 230, 64, 0.3)';
           centerRegion = this.getDeltas(gridData[item].lat, gridData[item].lng);
         } else {
-          gridData[item].gridFillColor = 'rgba(151, 253, 0, 0.3)';
+          gridData[item].gridFillColor = gridData[item].status === 'Completed'
+          ? 'rgba(70, 254, 24, 0.3)'
+          : gridData[item].status === 'InProgress'
+          ? 'rgba(254, 247, 77, 0.3)'
+          : gridData[item].status === 'Completed' && gridData[item].isBilled 
+          ? 'rgb(34,139,34, 0.3)'
+          : 'rgba(255, 166, 32, 0.3)';
         }
       }
       this.setState({gridData});

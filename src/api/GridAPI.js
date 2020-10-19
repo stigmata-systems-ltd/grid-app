@@ -9,7 +9,6 @@ const GetGridList = async () => {
   const value = 'Bearer ' + (await AsyncStorage.getItem('accessToken'));
   let isSessionExpired = false;
   let isRefreshed = false;
-  console.log(value);
   try {
     const {data} = await Axios.get(Constants.GridListAPI, {
       headers: {
@@ -33,6 +32,8 @@ const GetGridList = async () => {
             ? 'rgba(70, 254, 24, 0.3)'
             : data.lstGridDtls[item].status === 'InProgress'
             ? 'rgba(254, 247, 77, 0.3)'
+            : data.lstGridDtls[item].status === 'Completed' && data.lstGridDtls[item].isBilled 
+            ? 'rgb(34,139,34, 0.3)'
             : 'rgba(255, 166, 32, 0.3)',
       };
       gridData.push(singleGrid);
@@ -62,19 +63,16 @@ const GetGridListDropdown = async () => {
   const value = 'Bearer ' + (await AsyncStorage.getItem('accessToken'));
   let isSessionExpired = false;
   let isRefreshed = false;
-  console.log(value);
   try {
     const {data} = await Axios.get(Constants.GridListDropdownAPI, {
       headers: {
         Authorization: value.toString(),
       },
     });
-    console.log(data);
     let initialValue = {gridName: 'Select Grid', id: 0};
     data.unshift(initialValue);
     return {data, isSessionExpired, isRefreshed};
   } catch (err) {
-    console.log("error");
     if (err.response.status === 401) {
       const obj = await MiddleWare.GetRefreshToken();
       if (!obj.isSessionExpired) {
