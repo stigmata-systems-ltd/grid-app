@@ -15,11 +15,8 @@ import ImagePicker from 'react-native-image-picker';
 import LayerAPI from '../api/LayerAPI';
 import {Image, ThemeConsumer} from 'react-native-elements';
 import * as APIConstants from '../constants/APIConstants';
-import {isUserLoggedIn} from '../utils/auth';
+import Middleware from '../api/Middleware';
 import LoaderComponent from '../components/LoaderComponent';
-import {setRespInterceptor, setAuthHeader} from '../utils/auth';
-setAuthHeader();
-setRespInterceptor();
 
 export default class LayerUploadScreen extends Component {
   constructor(props) {
@@ -39,7 +36,7 @@ export default class LayerUploadScreen extends Component {
 
   componentDidMount = async () => {
     this.setState({isLoading: true});
-    if ((await AsyncStorage.getItem('accessToken')) === null) {
+    if (!Middleware.IsUserLoggedIn()) {
       this.setState({isLoading: false});
       this.props.navigation.navigate('Login');
     } else {
@@ -58,19 +55,33 @@ export default class LayerUploadScreen extends Component {
   };
 
   getLayerImages = async () => {
-    let LayerListDetails = await LayerAPI.GetLayerListDetails(
+    let {
+      LayerListDetails,
+      isSessionExpired,
+      isRefreshed,
+    } = await LayerAPI.GetLayerListDetails(
       this.props.route.params.layerDetailsId,
     );
-
-    if (
-      LayerListDetails !== null &&
-      LayerListDetails !== undefined &&
-      LayerListDetails.length > 0
-    ) {
-      let layerImages = LayerListDetails[0].layerDocs.filter((layer) => {
-        return layer.uploadType === 'Images';
-      });
-      this.setState({layerImages: layerImages, isLoading: false});
+    if (!isRefreshed) {
+      if (!isSessionExpired) {
+        if (
+          LayerListDetails !== null &&
+          LayerListDetails !== undefined &&
+          LayerListDetails.length > 0
+        ) {
+          let layerImagesOriginal = LayerListDetails[0].layerDocs.filter((layer) => {
+            return layer.uploadType === 'Images';
+          });
+          let layerImages = layerImagesOriginal.reverse();
+          this.setState({layerImages: layerImages, isLoading: false});
+        }
+      } else {
+        this.setState({isLoading: false});
+        await Middleware.clearSession();
+        this.props.navigation.navigate('Login');
+      }
+    } else {
+      this.onPageLoad();
     }
   };
 
@@ -79,10 +90,13 @@ export default class LayerUploadScreen extends Component {
       this.props.route.params.layerDetailsId.toString() !==
       prevProps.route.params.layerDetailsId.toString()
     ) {
-      if (!isUserLoggedIn()) {
+      this.setState({isLoading: true});
+      if (!Middleware.IsUserLoggedIn()) {
+        this.setState({isLoading: false});
         this.props.navigation.navigate('Login');
       } else {
-        this.onPageLoad();
+        await this.onPageLoad();
+        this.setState({isLoading: false});
       }
     }
   };
