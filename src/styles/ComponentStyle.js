@@ -114,13 +114,32 @@ const ComponentStyles = StyleSheet.create({
     borderBottomWidth: 0,
   },
   HeaderInnerContainerStyle: {
-    flex: 0.2,
+    flex: 3,
     flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   HeaderLogoContainerStyle: {
     flex: 1,
-    justifyContent: 'flex-start',
     alignContent: 'center',
+  },
+  HeaderLeftStyle: {
+    width: 60,
+  },
+  HeaderCenterStyle: {
+    marginVertical: 20,
+  },
+  HeaderRightStyle: {
+    width: 90,
+    marginVertical: 20,
+  },
+  HeaderLogoutStyle: {
+    zIndex: 10000,
+    marginLeft: 20,
+  },
+  HeaderProgressContainerStyle: {
+    marginLeft: -20,
+    marginVertical: -10,
+    alignContent:'center'
   },
   HeaderLogoStyle: {
     height: 47,
@@ -130,10 +149,8 @@ const ComponentStyles = StyleSheet.create({
   },
   HeaderTextContainerStyle: {
     flex: 1,
-    justifyContent: 'center',
-    alignContent: 'center',
     marginVertical: 32,
-    marginLeft:-20
+    marginLeft: -20,
   },
   HeaderTextStyle: {
     fontSize: 20,
@@ -142,26 +159,52 @@ const ComponentStyles = StyleSheet.create({
   },
   HeaderUserContainerStyle: {
     flex: 1,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginVertical: 10,
+    marginVertical: 32,
+    marginLeft: -20,
   },
   HeaderUserStyle: {
     marginRight: -30,
-    marginTop:10
+    marginTop: 10,
   },
   HeaderLeftArrowStyle: {
     marginLeft: 20,
     marginTop: 15,
   },
-  GridView_AutoCompleteComponentStyle: {
+  HeaderInProgressOuterContainerStyle: {
+    width: 80,
+    height: 15,
+    borderWidth: 1,
+    borderColor: '#184589',
+    marginTop: 2,
+  },
+  HeaderInProgressInnerContainerStyle: {
+    width: 40,
+    height: 15,
+    backgroundColor: '#184589',
+  },
+  HeaderNewContainerStyle: {
+    width: 80,
+    height: 15,
+    borderWidth: 1,
+    borderColor: '#184589',
+    marginTop: 2,
+  },
+  HeaderCompletedContainerStyle: {
+    width: 80,
+    height: 15,
+    borderWidth: 1,
+    borderColor: '#184589',
+    backgroundColor: '#184589',
+    marginTop: 2,
+  },
+  AutoCompleteComponentStyle: {
     backgroundColor: '#F1F4F8',
     borderColor: '#F1F4F8',
   },
-  GridView_AutoCompleteComponentItemStyle: {
+  AutoCompleteComponentItemStyle: {
     justifyContent: 'flex-start',
   },
-  GridView_AutoCompleteComponentDropDownStyle: {
+  AutoCompleteComponentDropDownStyle: {
     backgroundColor: '#F1F4F8',
     position: 'absolute',
   },
@@ -176,13 +219,13 @@ const ComponentStyles = StyleSheet.create({
     marginRight: 15,
     marginTop: 0,
   },
-  View_OuterLayerContainerStyle:{
+  View_OuterLayerContainerStyle: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginLeft: 15,
     marginRight: 15,
-    marginTop: 15
+    marginTop: 15,
   },
   View_InnerContainerStyle: {
     flex: 1,

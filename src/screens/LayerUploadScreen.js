@@ -3,10 +3,9 @@ import {
   View,
   ActivityIndicator,
   StyleSheet,
-  Text,
   ScrollView,
-  AsyncStorage,
   Dimensions,
+  ToastAndroid
 } from 'react-native';
 import StatusBarComponent from '../components/StatusBarComponent';
 import HeaderComponent from '../components/HeaderComponent';
@@ -52,6 +51,14 @@ export default class LayerUploadScreen extends Component {
       isLoading: true,
     });
     await this.getLayerImages();
+  };
+
+  showToast = (errorMessage) => {
+    ToastAndroid.showWithGravity(
+      errorMessage,
+      ToastAndroid.SHORT,
+      ToastAndroid.TOP,
+    );
   };
 
   getLayerImages = async () => {
@@ -109,6 +116,10 @@ export default class LayerUploadScreen extends Component {
         response.data,
         response.fileName,
       ).then(() => {
+        this.showToast("Image uploaded successfully");
+        this.onPageLoad();
+      }).catch(() => {
+        this.showToast("Error in uploading the image. Please try again later");
         this.onPageLoad();
       });
     });
@@ -166,6 +177,7 @@ export default class LayerUploadScreen extends Component {
                         width: Dimensions.get('window').width,
                         margin: 20,
                       }}
+                      PlaceholderContent={<ActivityIndicator />}
                     />
                   </View>
                 );

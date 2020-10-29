@@ -11,10 +11,10 @@ export default class AutoCompleteComponent extends Component {
             items={this.props.items}
             defaultValue={this.props.items[0].value}
             containerStyle={{height: 50}}
-            style={ComponentStyle.GridView_AutoCompleteComponentStyle}
-            itemStyle={ComponentStyle.GridView_AutoCompleteComponentItemStyle}
+            style={ComponentStyle.AutoCompleteComponentStyle}
+            itemStyle={ComponentStyle.AutoCompleteComponentItemStyle}
             dropDownStyle={
-              ComponentStyle.GridView_AutoCompleteComponentDropDownStyle
+              ComponentStyle.AutoCompleteComponentDropDownStyle
             }
             dropDownMaxHeight={200}
             onChangeItem={(item) => this.props.onChangeItemHandler(item)}

@@ -28,10 +28,23 @@ export default class LoginScreen extends Component {
     if (await isUserLoggedIn()) {
       this.props.navigation.navigate('Dashboard');
     } else {
+      console.log(await AsyncStorage.getItem('RememberMeOption'));
       let rememberUserName = await AsyncStorage.getItem('RememberUserName');
       let rememberPassword = await AsyncStorage.getItem('RememberPassword');
-      if (rememberUserName !== null || rememberUserName !== undefined)
-        this.setState({Username: rememberUserName, Password: rememberPassword});
+      let rememberMeOption = await AsyncStorage.getItem('RememberMeOption');
+      if (rememberUserName !== null || rememberUserName !== undefined || rememberMeOption !== undefined)
+        this.setState({
+          Username: rememberUserName,
+          Password: rememberPassword,
+          RememberMe: rememberMeOption == "true" ? true: false,
+        });
+      else {
+        this.setState({
+          Username: "",
+          Password: "",
+          RememberMe: false,
+        });
+      }
     }
   };
 
@@ -59,8 +72,10 @@ export default class LoginScreen extends Component {
       if (this.state.RememberMe) {
         await AsyncStorage.removeItem('RememberUserName');
         await AsyncStorage.removeItem('RememberPassword');
+        await AsyncStorage.removeItem('RememberMeOption');
         await AsyncStorage.setItem('RememberUserName', this.state.Username);
         await AsyncStorage.setItem('RememberPassword', this.state.Password);
+        await AsyncStorage.setItem('RememberMeOption', this.state.RememberMe ? "true": "false");
       }
       let result = await LoginAPI.LoginValidation(userDetails);
       if (!result.isValidated) {
