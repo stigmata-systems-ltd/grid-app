@@ -11,7 +11,6 @@ export const isUserLoggedIn = async () => {
 };
 
 export const setAuthTokens = async (userDetails) => {
-  console.log("Hitted : " + userDetails.token);
   await AsyncStorage.setItem('userDetails', JSON.stringify(userDetails));
   await AsyncStorage.setItem('accessToken', userDetails.token);
   await AsyncStorage.setItem(
@@ -28,7 +27,6 @@ export const logout = async ({history}) => {
   history.push('/');
 };
 export const setNewTokens = async (access, refresh) => {
-  console.log(access);
   await AsyncStorage.setItem('accessToken', JSON.stringify(access));
   await AsyncStorage.setItem('refreshToken', JSON.stringify(refresh));
 };
@@ -53,11 +51,9 @@ export const setAuthHeader = async () => {
 export const setRespInterceptor =  () => {
   axios.interceptors.response.use(
     (response) => {
-      console.log("Interceptor response : " + response);
       return response;
     },
     (error) => {
-      console.log("Error interceptor response : " + error.response.status);
       const originalRequest = error.config;
       if (error.response.status === 401) {
         originalRequest._retry = true;

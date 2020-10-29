@@ -3,8 +3,7 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
-  AsyncStorage,
+  TouchableOpacity
 } from 'react-native';
 import HeaderComponent from '../components/HeaderComponent';
 import StatusBarComponent from '../components/StatusBarComponent';
@@ -258,12 +257,13 @@ export default class GridViewScreen extends Component {
                   isLayer={false}></ViewComponent>
               </View>
               <View>
+              {this.state.isHavingLayer ? (
                 <View
                   style={GridViewStyles.gridView_LayerDetailsContainerStyle}>
                   <Text style={GridViewStyles.gridView_LayerDetailsTextStyle}>
                     {GridViewConstant.LAYER_DETAILS}
                   </Text>
-                </View>
+                </View>) : (<View></View>)}
                 {this.state.isHavingLayer ? (
                   <View
                     style={GridViewStyles.gridView_DropDownOuterContainerStyle}>

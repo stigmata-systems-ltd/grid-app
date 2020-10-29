@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import {View, Text, Image, TouchableOpacity} from 'react-native';
 import {DASHBOARD_LOGO} from '../assets/index';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import ComponentStyle from '../styles/ComponentStyle';
 
@@ -10,7 +9,7 @@ export default class HeaderComponent extends Component {
     return (
       <View style={ComponentStyle.HeaderContainerStyle}>
         <View style={ComponentStyle.HeaderInnerContainerStyle}>
-          <View style={ComponentStyle.HeaderLogoContainerStyle}>
+          <View style={ComponentStyle.HeaderLeftStyle}>
             {this.props.IsDashboard === true ? (
               <Image
                 source={DASHBOARD_LOGO}
@@ -25,63 +24,39 @@ export default class HeaderComponent extends Component {
               </TouchableOpacity>
             )}
           </View>
-          <View style={ComponentStyle.HeaderTextContainerStyle}>
+          <View style={ComponentStyle.HeaderCenterStyle}>
             <Text style={ComponentStyle.HeaderTextStyle}>
               {this.props.headingValue}
             </Text>
           </View>
-          <View style={ComponentStyle.HeaderUserContainerStyle}>
+          <View style={ComponentStyle.HeaderRightStyle}>
             {this.props.IsDashboard === true ? (
-              <TouchableOpacity onPress={this.props.refreshHandler}>
-                  <MaterialIcon
-                    name="refresh"
-                    size={30}
-                    style={ComponentStyle.HeaderUserStyle}
-                  />
-              </TouchableOpacity>
+              <View style={ComponentStyle.HeaderLogoutStyle}>
+                <TouchableOpacity onPress={this.props.logoutHandler}>
+                  <MaterialIcon name="logout" size={30} />
+                </TouchableOpacity>
+              </View>
             ) : this.props.gridStatus == 'InProgress' ? (
-              <View>
+              <View style={ComponentStyle.HeaderProgressContainerStyle}>
                 <Text>In Progress</Text>
                 <View
-                  style={{
-                    width: 80,
-                    height: 15,
-                    borderWidth: 1,
-                    borderColor: '#184589',
-                    marginTop: 2,
-                  }}>
+                  style={ComponentStyle.HeaderInProgressOuterContainerStyle}>
                   <View
-                    style={{
-                      width: 40,
-                      height: 15,
-                      backgroundColor: '#184589',
-                    }}></View>
+                    style={
+                      ComponentStyle.HeaderInProgressInnerContainerStyle
+                    }></View>
                 </View>
               </View>
             ) : this.props.gridStatus == 'New' ? (
-              <View>
-                <Text>New</Text>
-                <View
-                  style={{
-                    width: 80,
-                    height: 15,
-                    borderWidth: 1,
-                    borderColor: '#184589',
-                    marginTop: 2,
-                  }}></View>
+              <View style={ComponentStyle.HeaderProgressContainerStyle}>
+                <Text style={{marginLeft:20}}>New</Text>
+                <View style={ComponentStyle.HeaderNewContainerStyle}></View>
               </View>
             ) : this.props.gridStatus == 'Completed' ? (
-              <View>
+              <View style={ComponentStyle.HeaderProgressContainerStyle}>
                 <Text>Completed</Text>
                 <View
-                  style={{
-                    width: 80,
-                    height: 15,
-                    borderWidth: 1,
-                    borderColor: '#184589',
-                    backgroundColor: '#184589',
-                    marginTop: 2,
-                  }}></View>
+                  style={ComponentStyle.HeaderCompletedContainerStyle}></View>
               </View>
             ) : (
               <View></View>

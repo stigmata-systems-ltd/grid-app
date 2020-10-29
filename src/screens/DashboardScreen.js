@@ -4,7 +4,8 @@ import {
   TouchableOpacity,
   PermissionsAndroid,
   StyleSheet,
-  Animated,
+  ScrollView,
+  RefreshControl,
   AsyncStorage,
   Text,
 } from 'react-native';
@@ -31,6 +32,7 @@ export default class DashBoardScreen extends Component {
     this.state = {
       GridNumber: '',
       isLoading: false,
+      isRefreshing: false,
       initialRegion: {
         latitude: 10.391000434756279,
         longitude: 77.97916952213156,
@@ -50,6 +52,7 @@ export default class DashBoardScreen extends Component {
 
   componentDidMount = async () => {
     this.setState({isLoading: true});
+
     if (!Middleware.IsUserLoggedIn()) {
       this.setState({isLoading: false});
       this.props.navigation.navigate('Login');
@@ -59,8 +62,19 @@ export default class DashBoardScreen extends Component {
     }
   };
 
+  onPageRefresh = async () => {
+    this.setState({isRefreshing: true});
+    if (!Middleware.IsUserLoggedIn()) {
+      this.setState({isRefreshing: false});
+      this.props.navigation.navigate('Login');
+    } else {
+      await this.onPageLoad();
+      this.setState({gridId: 0});
+      this.setState({isRefreshing: false});
+    }
+  };
+
   onPageLoad = async () => {
-    
     let access = await this.accessPermission();
     if (access) {
       await this.getGridDropdown();
@@ -74,7 +88,7 @@ export default class DashBoardScreen extends Component {
       isSessionExpired,
       isRefreshed,
     } = await GridAPI.GetGridListDropdown();
-    
+
     let gridDetailsDropdown = [];
     if (!isRefreshed) {
       if (!isSessionExpired) {
@@ -123,14 +137,13 @@ export default class DashBoardScreen extends Component {
   };
 
   getGridData = async () => {
-    
     let {
       gridData,
       dataForCenter,
       isSessionExpired,
       isRefreshed,
     } = await GridAPI.GetGridList();
-    
+
     if (!isRefreshed) {
       if (!isSessionExpired) {
         if (gridData !== null && gridData !== undefined) {
@@ -259,13 +272,14 @@ export default class DashBoardScreen extends Component {
           gridData[item].gridFillColor = 'rgba(0, 230, 64, 0.3)';
           centerRegion = this.getDeltas(gridData[item].lat, gridData[item].lng);
         } else {
-          gridData[item].gridFillColor = gridData[item].status === 'Completed'
-          ? 'rgba(70, 254, 24, 0.3)'
-          : gridData[item].status === 'InProgress'
-          ? 'rgba(254, 247, 77, 0.3)'
-          : gridData[item].status === 'Completed' && gridData[item].isBilled 
-          ? 'rgb(34,139,34, 0.3)'
-          : 'rgba(255, 166, 32, 0.3)';
+          gridData[item].gridFillColor =
+            gridData[item].status === 'Completed'
+              ? 'rgba(70, 254, 24, 0.3)'
+              : gridData[item].status === 'InProgress'
+              ? 'rgba(254, 247, 77, 0.3)'
+              : gridData[item].status === 'Completed' && gridData[item].isBilled
+              ? 'rgb(34,139,34, 0.3)'
+              : 'rgba(255, 166, 32, 0.3)';
         }
       }
       this.setState({gridData});
@@ -361,10 +375,9 @@ export default class DashBoardScreen extends Component {
     }
   };
 
-  onRefreshHandler = async () => {
-    if ((await AsyncStorage.getItem('accessToken')) === null) {
-      this.props.navigation.navigate('Login');
-    } else await this.onPageLoad();
+  logoutHandler = async () => {
+    await Middleware.clearSession();
+    this.props.navigation.navigate("Login");
   };
 
   onMapReadyHandler = () => {
@@ -377,22 +390,34 @@ export default class DashBoardScreen extends Component {
         {this.state.isLoading ? (
           <LoaderComponent></LoaderComponent>
         ) : (
-          <Animated.View style={{flex: 3, backgroundColor: '#FFFFFF'}}>
+          <ScrollView
+            contentContainerStyle={{flex: 3, backgroundColor: '#FFFFFF'}}
+            refreshControl={
+              <RefreshControl
+                refreshing={this.state.isRefreshing}
+                onRefresh={this.onPageRefresh}
+              />
+            }>
             <StatusBarComponent IsVisible={false}></StatusBarComponent>
             <HeaderComponent
               headingValue="Dashboard"
               IsDashboard={true}
-              refreshHandler={() => this.onRefreshHandler()}></HeaderComponent>
-            <Animated.View
-              style={{flex: 4, flexDirection: 'row', height: 70, marginTop: 5}}>
-              <Animated.View
+              logoutHandler={this.logoutHandler}></HeaderComponent>
+            <View
+              style={{
+                flex: 4,
+                flexDirection: 'row',
+                height: 70,
+                marginTop: 5,
+              }}>
+              <View
                 style={{
                   flex: 5,
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                   padding: 15,
                 }}>
-                <Animated.View style={{flex: 4, marginTop: 5}}>
+                <View style={{flex: 4, marginTop: 5}}>
                   {Object.keys(this.state.gridDetailsDropdown).length > 0 ? (
                     <AutoCompleteComponent
                       WhereFromValue="Dashboard"
@@ -403,7 +428,7 @@ export default class DashBoardScreen extends Component {
                   ) : (
                     <Text></Text>
                   )}
-                </Animated.View>
+                </View>
                 <TouchableOpacity
                   style={{flex: 0.7}}
                   onPress={() => this.getSearchGrid()}>
@@ -419,9 +444,9 @@ export default class DashBoardScreen extends Component {
                       borderRadius: 3,
                     }}></Icon>
                 </TouchableOpacity>
-              </Animated.View>
-              <Animated.View style={{flex: 1}}>
-                <Animated.View style={{marginTop: 17}}>
+              </View>
+              <View style={{flex: 1}}>
+                <View style={{marginTop: 17}}>
                   <TouchableOpacity
                     onPress={() => {
                       this.locationHandler();
@@ -435,19 +460,19 @@ export default class DashBoardScreen extends Component {
                         this.state.isCurrentLocationHandled ? 'green' : 'red'
                       }></MaterialIcon>
                   </TouchableOpacity>
-                </Animated.View>
-              </Animated.View>
-            </Animated.View>
+                </View>
+              </View>
+            </View>
             {this.state.isCurrentLocationHandled ? (
-              <Animated.View>
+              <View>
                 <Text style={styles.blinkTwoStyle}>
                   {this.state.currentGridDetails}
                 </Text>
-              </Animated.View>
+              </View>
             ) : (
-              <Animated.View></Animated.View>
+              <View></View>
             )}
-            <Animated.View
+            <View
               style={{
                 flex: 28,
                 backgroundColor: 'white',
@@ -540,8 +565,8 @@ export default class DashBoardScreen extends Component {
                   <Text>No Render</Text>
                 )}
               </>
-            </Animated.View>
-          </Animated.View>
+            </View>
+          </ScrollView>
         )}
       </>
     );
