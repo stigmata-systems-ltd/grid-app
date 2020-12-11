@@ -1,0 +1,1 @@
+export const GridStatus = {Completed: 'Completed', InProgress: 'InProgress'};

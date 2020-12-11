@@ -24,7 +24,6 @@ export const logout = async ({history}) => {
   await AsyncStorage.removeItem('userDetails');
   await AsyncStorage.removeItem('accessToken');
   await AsyncStorage.removeItem('refreshToken');
-  history.push('/');
 };
 export const setNewTokens = async (access, refresh) => {
   await AsyncStorage.setItem('accessToken', JSON.stringify(access));
@@ -48,12 +47,12 @@ export const setAuthHeader = async () => {
   });
 };
 
-export const setRespInterceptor =  () => {
+export const setRespInterceptor =  async () => {
   axios.interceptors.response.use(
     (response) => {
       return response;
     },
-    (error) => {
+     (error) => {
       const originalRequest = error.config;
       if (error.response.status === 401) {
         originalRequest._retry = true;

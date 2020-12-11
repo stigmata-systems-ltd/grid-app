@@ -1,5 +1,5 @@
 //export const GLOBAL_VALUE = 'http://ec2-13-212-97-74.ap-southeast-1.compute.amazonaws.com:8080';
-export const GLOBAL_VALUE = 'http://ec2-13-212-97-74.ap-southeast-1.compute.amazonaws.com';
+export const GLOBAL_VALUE = 'http://13.229.45.6:8095';
 export const AuthRefreshAPI = GLOBAL_VALUE + '/api/Auth/refreshtoken'; 
 export const LoginAPI = GLOBAL_VALUE + '/api/auth/authenticate';
 export const GridListAPI = GLOBAL_VALUE + '/api/Reports/GridProgressMap';
