@@ -13,7 +13,8 @@ import {
   SET_CURRENT_LOC,
   SET_WATCH_ID,
   GET_SEARCH_GRID,
-  SET_SEARCH_GRID
+  SET_SEARCH_GRID,
+  SET_GRID_ID
 } from '../actions/types';
 
 const initialState = {
@@ -69,7 +70,9 @@ const gridReducer = (state = initialState, action) => {
     case GET_SEARCH_GRID:
       return {...state, isLoading: true};
     case SET_SEARCH_GRID:
-      return {...state, isLoading: false, gridData: action.payload};
+      return {...state, isLoading: false, gridData: action.payload.gridData, initialRegion: action.payload.initialRegion};
+    case SET_GRID_ID:
+      return {...state, gridId: action.payload};
     default:
       return state;
   }

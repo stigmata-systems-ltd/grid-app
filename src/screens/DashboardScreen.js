@@ -33,7 +33,9 @@ import {
   setInitialRegion,
   setCurrentGridDetails,
   setCurrentLoc,
-  setWatchId
+  setWatchId,
+  searchSpecificGrid,
+  setGridId
 } from '../redux/actions/gridActions';
 import { connect } from 'react-redux';
 import store from '../redux/store';
@@ -44,34 +46,11 @@ export class DashBoardScreen extends Component {
   }
 
   componentDidMount = async () => {
-    // this.props.getGridData();
     this.onPageLoad();
-    // this.setState({isLoading: true});
-
-    // if (!Middleware.IsUserLoggedIn()) {
-    //   this.setState({isLoading: false});
-    //   this.props.navigation.navigate('Login');
-    // } else {
-    //   await this.onPageLoad();
-    //   this.setState({isLoading: false});
-    // }
   };
-
-  // onPageRefresh = async () => {
-  //   this.setState({isRefreshing: true});
-  //   if (!Middleware.IsUserLoggedIn()) {
-  //     this.setState({isRefreshing: false});
-  //     this.props.navigation.navigate('Login');
-  //   } else {
-  //     await this.onPageLoad();
-  //     this.setState({gridId: 0});
-  //     this.setState({isRefreshing: false});
-  //   }
-  // };
 
   onPageLoad = async () => {
     let access = await this.accessPermission();
-    console.log(access);
     if (access) {
       await this.props.getGridDropDownData();
       await this.props.getGridData();
@@ -99,41 +78,6 @@ export class DashBoardScreen extends Component {
     }
   };
 
-  // getGridDropdown = async () => {
-  //   let {
-  //     data,
-  //     isSessionExpired,
-  //     isRefreshed,
-  //   } = await GridAPI.GetGridListDropdown();
-
-  //   let gridDetailsDropdown = [];
-  //   if (!isRefreshed) {
-  //     if (!isSessionExpired) {
-  //       if (
-  //         data !== null &&
-  //         data !== undefined &&
-  //         Object.keys(data).length > 0
-  //       ) {
-  //         for (let item in data) {
-  //           let gridDataItem = {
-  //             label: data[item].gridName,
-  //             value: data[item].id,
-  //           };
-  //           gridDetailsDropdown.push(gridDataItem);
-  //         }
-  //         this.setState({gridDetailsDropdown});
-  //         this.setState({gridId: gridDetailsDropdown[0].value});
-  //       }
-  //     } else {
-  //       this.setState({isLoading: false});
-  //       await Middleware.clearSession();
-  //       this.props.navigation.navigate('Login');
-  //     }
-  //   } else {
-  //     this.onPageLoad();
-  //   }
-  // };
-
   getCurrentPositionData = async () => {
     let access = await this.accessPermission();
     if (access) {
@@ -157,7 +101,7 @@ export class DashBoardScreen extends Component {
       lat: point.coords.latitude,
       lng: point.coords.longitude,
     };
-  
+
     GeoFencing.containsLocation(pointDetail, polygon)
       .then(() => {
         this.props.grid.setCurrentGridDetails(title !== undefined ? 'Currently in the grid : ' + title : '');
@@ -165,80 +109,17 @@ export class DashBoardScreen extends Component {
       })
       .catch(() => { });
   };
-  
-
-  // getGridData = async () => {
-  //   let {
-  //     gridData,
-  //     dataForCenter,
-  //     isSessionExpired,
-  //     isRefreshed,
-  //   } = await GridAPI.GetGridList();
-
-  //   if (!isRefreshed) {
-  //     if (!isSessionExpired) {
-  //       if (gridData !== null && gridData !== undefined) {
-  //         let initialRegion = this.getDeltas(18.9651515, 72.8002582142857);
-  //         this.setState({initialRegion: initialRegion});
-  //         this.setState({gridData: gridData, dataForCenter: dataForCenter});
-  //         gridData.map((polygon) => {
-  //           let polygonDetail = [];
-  //           polygon.rectCords.map((pot) => {
-  //             let polypot = {
-  //               lat: pot.latitude,
-  //               lng: pot.longitude,
-  //             };
-  //             polygonDetail.push(polypot);
-  //           });
-  //           let position = {};
-  //           let coords = {
-  //             latitude: gridData[0].lat,
-  //             longitude: gridData[0].lng,
-  //           };
-  //           position.coords = coords;
-  //           this.geoLocationHandler(
-  //             position,
-  //             polygonDetail,
-  //             polygon.gridNumber,
-  //           );
-  //         });
-  //         this.setState({isLoading: false});
-  //       } else {
-  //         this.setState({isLoading: false});
-  //       }
-  //     } else {
-  //       this.setState({isLoading: false});
-  //       await Middleware.clearSession();
-  //       this.props.navigation.navigate('Login');
-  //     }
-  //   } else {
-  //     this.onPageLoad();
-  //   }
-  // };
-
-  // setCurrentLocation = () => {
-  //   let watchId = Geolocation.watchPosition(
-  //     (position) => {
-  //       this.setState({currLoc: position});
-  //     },
-  //     (err) => {
-  //       err;
-  //     },
-  //     {enableHighAccuracy: true, distanceFilter: 1},
-  //   );
-  //   this.setState({watchId: watchId});
-  // };
 
   locationHandler = async () => {
     if (!this.props.isCurrentLocationHandled) {
       this.props.getGridData();
-      let access = await accessPermission();
+      let access = await this.accessPermission();
       if (access) {
         this.props.setIsCurrentLocationDisabled(true);
         await Geolocation.getCurrentPosition(
           (position) => {
             initialPosition = JSON.stringify(position);
-            this.props.setInitialRegion(initialRegion);
+            this.props.setInitialRegion(initialPosition);
             this.props.grid.gridData.map((polygon) => {
               let polygonDetail = [];
               polygon.rectCords.map((pot) => {
@@ -366,36 +247,16 @@ export class DashBoardScreen extends Component {
 
   getSearchGrid = () => {
     if (this.props.grid.gridId !== 0) {
-      let gridData = this.props.grid.gridData;
-      let centerRegion = {};
-
-      for (let item in gridData) {
-        if (gridData[item].gridId === this.state.gridId) {
-          gridData[item].gridFillColor = 'rgba(0, 230, 64, 0.3)';
-          centerRegion = this.getDeltas(gridData[item].lat, gridData[item].lng);
-        } else {
-          gridData[item].gridFillColor =
-            gridData[item].status === 'Completed'
-              ? 'rgba(70, 254, 24, 0.3)'
-              : gridData[item].status === 'InProgress'
-                ? 'rgba(254, 247, 77, 0.3)'
-                : gridData[item].status === 'Completed' && gridData[item].isBilled
-                  ? 'rgb(34,139,34, 0.3)'
-                  : 'rgba(255, 166, 32, 0.3)';
-        }
-      }
-      this.setState({ gridData });
-      this.setState({ initialRegion: centerRegion });
+      this.props.searchSpecificGrid(this.props.grid.gridData, this.props.grid.gridId);
     }
   };
 
   onChangeItemHandler = (item) => {
-    // this.setState({gridId: item.value});
-    // if (item.value === 0) {
-    //   this.getGridData();
-    // }
+    this.props.setGridId(item.value);
+    if (item.value === 0) {
+      this.props.getGridData();
+    }
   };
-
 
 
   logoutHandler = async () => {
@@ -627,11 +488,15 @@ const mapStateToProps = (state) => {
 };
 
 export default connect(mapStateToProps,
-  { getGridData, 
-    getInitialRegionData, 
-    getGridDropDownData, 
-    setIsCurrentLocationDisabled, 
+  {
+    getGridData,
+    getInitialRegionData,
+    getGridDropDownData,
+    setIsCurrentLocationDisabled,
     setInitialRegion,
     setCurrentGridDetails,
     setCurrentLoc,
-    setWatchId })(DashBoardScreen);
+    setWatchId,
+    searchSpecificGrid,
+    setGridId
+  })(DashBoardScreen);

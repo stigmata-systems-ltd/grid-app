@@ -64,7 +64,6 @@ export const setRememberOption = (remember) => {
     rememberUsername: username,
     rememberPassword: password,
   };
-  console.log("Remee : " + JSON.stringify(rememberOpt));
   return async (dispatch) => {
     await setRememberOptions(rememberOpt);
     console.log("Sett");

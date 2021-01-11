@@ -26,6 +26,7 @@ class LoginScreen extends Component {
       this.props.navigation.navigate('Dashboard');
     } else {
       console.log("Hitted");
+      
       this.props.getRememberOption();
     }
   };

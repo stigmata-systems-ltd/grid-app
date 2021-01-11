@@ -55,7 +55,9 @@ const authenticateReducer = (state = initialState, action) => {
         ...state,
         rememberUsername: action.payload.rememberUsername,
         rememberPassword: action.payload.rememberPassword,
-        rememberOption: action.payload.rememberOption,
+        username: action.payload.rememberUsername,
+        password: action.payload.rememberPassword,
+        rememberme: action.payload.rememberOption,
       };
     default:
       return state;

@@ -14,14 +14,14 @@ import {
   GET_CURRENT_LOC,
   SET_CURRENT_LOC,
   SET_WATCH_ID,
-  SET_SEARCH_GRID
+  SET_SEARCH_GRID,
+  SET_SEARCH_GRID_ERROR,
+  SET_GRID_ID
 } from './types';
 import axios from 'axios';
 import * as APIConstants from '../../constants/APIConstants';
 import { authorizationHeader } from '../utils';
 import { GridStatus } from '../constants';
-import GeoFencing from 'react-native-geo-fencing';
-import store from '../store';
 
 export const getGridDataRequest = () => ({ type: GET_GRID_DATA_REQUEST });
 export const getGridDataSuccess = (gridData, dataForCenter, initialRegion) => ({ type: GET_GRID_DATA_SUCCESS, payload: { 'gridData': gridData, 'dataForCenter': dataForCenter, 'initialRegion': initialRegion } });
@@ -57,11 +57,19 @@ export const getSearchGrid = () => {
   }
 }
 
-export const setSearchGrid = (data) => {
+export const setSearchGrid = (gridData, initialRegion) => {
   return async (dispatch) => {
-    dispatch({ type: SET_SEARCH_GRID, payload: data });
+    dispatch({ type: SET_SEARCH_GRID, payload: { 'gridData': gridData, 'initialRegion': initialRegion } });
   }
 }
+
+export const setGridId = (value) => {
+  return async (dispatch) => {
+    dispatch({  type: SET_GRID_ID, payload: value});
+  }
+}
+
+export const setSearchGridError = (error) => ({type: SET_SEARCH_GRID_ERROR, payload: error});
 
 export const getCurrentGridDetails = () => ({ type: GET_CURRENT_GRID_DETAILS });
 export const setCurrentGridDetails = (value) => {
@@ -161,14 +169,31 @@ export const getInitialRegionData = () => {
   }
 }
 
-export const searchSpecificGrid = () => {
+export const searchSpecificGrid = (gridData, gridId) => {
   return dispatch => {
-    dispatch(getSearchGrid());
     try{
+      let centerRegion = {};
 
+      for (let item in gridData) {
+        if (gridData[item].gridId === gridId) {
+          gridData[item].gridFillColor = 'rgba(0, 230, 64, 0.3)';
+          centerRegion = getDeltas(gridData[item].lat, gridData[item].lng);
+        } else {
+          gridData[item].gridFillColor =
+            gridData[item].status === GridStatus.Completed
+              ? 'rgba(70, 254, 24, 0.3)'
+              : gridData[item].status === GridStatus.InProgress
+                ? 'rgba(254, 247, 77, 0.3)'
+                : gridData[item].status === GridStatus.Completed && gridData[item].isBilled
+                  ? 'rgb(34,139,34, 0.3)'
+                  : 'rgba(255, 166, 32, 0.3)';
+        }
+      }
+      
+      dispatch(setSearchGrid(gridData, centerRegion));
     }
     catch(error){
-      
+      dispatch(setSearchGridError(error));
     }
   }
 }
